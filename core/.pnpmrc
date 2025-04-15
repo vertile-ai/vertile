@@ -1,0 +1,7 @@
+node-linker=hoisted
+auto-install-peers=true
+strict-peer-dependencies=false
+# Skip optional dependencies that require native compilation
+optional-packages-enabled=false
+# Use system Node.js for scripts
+use-node-version=22.11.0 

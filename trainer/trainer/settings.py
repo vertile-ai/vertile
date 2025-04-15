@@ -137,3 +137,16 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Django Ninja settings
+NINJA_TITLE = "Trainer API"  # API documentation title
+NINJA_DESCRIPTION = "API for LLM fine-tuning tasks"  # API documentation description
+NINJA_VERSION = "1.0.0"  # API version
+NINJA_CSRF = False  # Disable CSRF protection for API requests (if your API uses token authentication)
+
+CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins in development environment
+# In production, specify allowed origins
+# CORS_ALLOWED_ORIGINS = [
+#     "https://example.com",
+#     "https://sub.example.com",
+# ]

@@ -2,7 +2,7 @@ import json
 import logging
 import sys
 from io import StringIO
-from typing import Callable
+from typing import Callable, TextIO, Optional, Union
 
 
 # Custom class to intercept stdout
@@ -43,3 +43,34 @@ def get_stream_logger(name: str, level=logging.INFO):
     logger.addHandler(ch)
 
     return logger
+
+
+def log_and_print(
+    logger: logging.Logger,
+    log_file: Optional[TextIO],
+    message: str,
+    level: str = "info",
+):
+    """
+    Helper function to both log to file and print to console
+
+    Args:
+        logger: The logger instance to use
+        log_file: File object to write to (can be None)
+        message: The message to log
+        level: Log level (info, warning, error, debug)
+    """
+    # Log to the logger
+    if level.lower() == "info":
+        logger.info(message)
+    elif level.lower() == "warning":
+        logger.warning(message)
+    elif level.lower() == "error":
+        logger.error(message)
+    elif level.lower() == "debug":
+        logger.debug(message)
+
+    # Write to the log file if provided
+    if log_file:
+        log_file.write(f"{message}\n")
+        log_file.flush()  # Ensure the log is written immediately

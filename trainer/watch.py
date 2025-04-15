@@ -1,9 +1,10 @@
-from watchgod import run_process
+# 使用 watchfiles 监控文件变化
 import subprocess
 import os
 import sys
 import psutil
 import time
+from watchfiles import watch, Change
 
 process = None
 port = 8000
@@ -22,7 +23,6 @@ def kill_processes_on_port(port):
 
 def run_daphne():
     global process
-    # Terminate any existing processes on the port
     kill_processes_on_port(port)
 
     cmd = [
@@ -36,6 +36,24 @@ def run_daphne():
         "trainer.asgi:application",
     ]
     process = subprocess.Popen(cmd)
+
+
+def run_process(directory, callback):
+    callback()
+
+    print(f"Watching {directory} changess")
+
+    for changes in watch(
+        directory, watch_filter=lambda path: not path.endswith((".pyc", ".git"))
+    ):
+        if changes:
+            change_types = {change.type for change, _ in changes}
+            changed_files = [path for _, path in changes]
+
+            if any(path.endswith(".py") for path in changed_files):
+                print("Restarting server...")
+                callback()
+                print("Server restarted...")
 
 
 if __name__ == "__main__":

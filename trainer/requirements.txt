@@ -1,14 +1,15 @@
 django
+django-ninja>=0.22.0
 django-ratelimit
 python-dotenv
 channels
 channels_redis
 daphne
-watchgod
+watchfiles
 psutil
 
 transformers
-numspy
+numpy
 trl>=0.9.4,<1.0.0
 peft
 accelerate>=0.32.0

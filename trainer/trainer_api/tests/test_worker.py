@@ -23,8 +23,8 @@ class WorkerTestCase(TestCase):
         """
         Must spawn a worker and pick up the job
         """
-        i = 0
-        while i < 10:
+        for _ in range(10):
             self.worker.submit(MockTask(method="fake", model="fake", dataset="fake"))
-            i += 1
             time.sleep(1)
+        # by default, there should be only one worker maximum
+        self.assertEqual(len(self.worker.thread_map), 1)

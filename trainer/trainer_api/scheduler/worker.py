@@ -9,7 +9,7 @@ from typing import Dict, List
 import uuid
 
 from trainer.settings import BASE_DIR
-from trainer_api.utils.logging_utils import get_stream_logger
+from trainer_api.utils.logging_utils import get_stream_logger, log_and_print
 from trainer_api.utils.constants import (
     LOG_DIR,
     MAX_IDLE_TIME,
@@ -49,11 +49,11 @@ class Worker:
         self.task_queue = MQueue[Task]()
         self.task_queue_lock = threading.Lock()
 
-        # TODO: start a scheduler that check idle time of all threads and shutdown any that exceeds
+        # start a scheduler that check idle time of all threads and shutdown any that exceeds
         self.max_idle_time = (
-            ~~kwargs["max_idle_time"] if "max_idle_time" in kwargs else MAX_IDLE_TIME
+            kwargs["max_idle_time"] if "max_idle_time" in kwargs else MAX_IDLE_TIME
         )
-        self.max_thread = ~~kwargs["max_thread"] if "max_thread" in kwargs else 1
+        self.max_thread = kwargs["max_thread"] if "max_thread" in kwargs else 1
 
         self.thread_map: Dict[int, WorkerThread] = {}
 
@@ -67,7 +67,7 @@ class Worker:
 
     def submit(self, task_instance):
         """
-        Add a task to the queue anyway, unless the task is invalid
+        Add a task to the queue anyway
         Then check if there are worker threads number exceeding max number
         if not, spawn a thread to take the task
         if yes, just return, as the worker has restarted working
@@ -85,7 +85,7 @@ class Worker:
         """
         if self._idle_semaphore.acquire(timeout=0):
             worker_manager_logger.info(
-                f"the worker is already working on the task, no spawning"
+                f"the worker is already working on a task, no spawning"
             )
             return
 
@@ -126,11 +126,14 @@ class WorkerThread(threading.Thread):
         os.makedirs(LOG_DIR, exist_ok=True)
 
         with open(log_path, "w+") as log:
-            worker_thread_logger.info(f"|{self.id}| A worker thread started")
-            log.write(f"|{self.id}| A worker thread started")
+            log_and_print(
+                worker_thread_logger, log, f"|{self.id}| A worker thread started"
+            )
+
             if self.worker_instance.task_queue.length == 0:
-                print("[Worker] Nothing in queue, finished")
-                log.write("[Worker] Nothing in queue, finished")
+                log_and_print(
+                    worker_thread_logger, log, "[Worker] Nothing in queue, finished"
+                )
                 return
 
             try:
@@ -138,54 +141,52 @@ class WorkerThread(threading.Thread):
                     task = self.worker_instance.pop_task()
                     worker_thread_logger.info(f"popped a task {task}")
                     if task is None:
-                        print(
-                            f"[Worker_{self.id}] Nothing to pick | state: {self.state}"
+                        log_and_print(
+                            worker_thread_logger,
+                            log,
+                            f"[Worker_{self.id}] Nothing to pick | state: {self.state}",
                         )
-                        log.write(
-                            f"[Worker_{self.id}] Worker thread is continuing with state {self.state}.\n"
-                        )
-
                         time.sleep(1)
 
                     elif self.state == WorkerStates.BUSY:
-                        print(
-                            f"[Worker_{self.id}] Worker cannot pick up job atm. {self.state}."
+                        log_and_print(
+                            worker_thread_logger,
+                            log,
+                            f"[Worker_{self.id}] Worker cannot pick up job atm. {self.state}.",
                         )
-                        log.write(
-                            f"[Worker_{self.id}] Worker cannot pick up job atm. {self.state}.\n"
-                        )
-
                         time.sleep(1)
 
                     else:
                         self.task_id = task.id
-                        worker_thread_logger.info(
-                            f"[Worker_{self.id}] Picked a task: {task}"
+                        log_and_print(
+                            worker_thread_logger,
+                            log,
+                            f"[Worker_{self.id}] Picked a task: {task}",
                         )
-                        log.write(f"[Worker_{self.id}] Picked a task: {task}\n")
                         # process task
                         self.state = WorkerStates.BUSY
                         task.run()
 
                         # task is done
-                        print(f"[Worker_{self.id}] Task completed: {task}")
-                        log.write(f"[Worker_{self.id}] Task completed: {task}.\n")
-
+                        log_and_print(
+                            worker_thread_logger,
+                            log,
+                            f"[Worker_{self.id}] Task completed: {task}",
+                        )
                         self.state = WorkerStates.IDLE
 
             except subprocess.CalledProcessError as e:
-                print(f"[Worker_{self.id}] Task errored")
-                log.write(f"[Worker_{self.id}] Task Errored: {self}.\n")
-                log.write(f"{str(e)}")
+                log_and_print(worker_thread_logger, log, f"{str(e)}", "error")
 
                 self.state = WorkerStates.ERROR
 
                 if task.retried < task.max_retry:
                     task.retried += 1
                     # put back to the queue
-                    print(f"[Worker] put a task back to the queue for retry: {task}")
-                    log.write(
-                        f"[Worker] put a task back to the queue for retry: {task}"
+                    log_and_print(
+                        worker_thread_logger,
+                        log,
+                        f"[Worker] put a task back to the queue for retry: {task}",
                     )
 
             self.notify_job_finished()

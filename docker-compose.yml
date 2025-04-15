@@ -11,6 +11,23 @@ services:
     depends_on:
       - db
 
+  pyapi:
+    build:
+      context: ./pycore
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./pycore/app:/app/app
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/vertile?schema=public
+    restart: unless-stopped
+    depends_on:
+      - db
+
   db:
     image: postgres:15
     restart: always

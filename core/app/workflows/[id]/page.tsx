@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import { useParams } from 'next/navigation';
 import useSWR from 'swr';
-import { WorkflowReactFlowProvider } from '@/src/components/workflow';
+import { ReactFlowProvider } from 'reactflow';
 import ConfiguredNodePanel from '@/src/components/workflow/NodePanelWrapper';
 import { useWorkflow } from '@/src/components/workflow/hooks/workflow.hooks';
 import { formatDistanceToNow } from 'date-fns';
@@ -19,6 +19,8 @@ import dynamic from 'next/dynamic';
 import { WorkflowContextProvider } from '@/src/components/workflow/context';
 import { useStore } from '@/src/components/workflow/store';
 import SaveStatusIcon from '@/app/components/workflow/SaveStatusIcon';
+import LoadingWorkflow from '@/app/components/workflow/LoadingWorkflow';
+import WorkflowError from '@/app/components/workflow/WorkflowError';
 
 // Dynamically import the workflow container to avoid SSR issues
 const WorkflowContainer = dynamic(() => import('@/src/components/workflow'), {
@@ -85,7 +87,6 @@ const WorkflowPage = () => {
   // State to track if the panel is open
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  // After: with SWR
   const {
     data: workflowData,
     error,
@@ -142,6 +143,16 @@ const WorkflowPage = () => {
     }
   }, [selectedNode]);
 
+  // If loading or error, show loading state
+  if (isLoading || (!workflowData && !error)) {
+    return <LoadingWorkflow />;
+  }
+
+  // If error, show error state
+  if (error) {
+    return <WorkflowError />;
+  }
+
   return (
     <div className="relative w-full h-full bg-gray-50">
       <div className="absolute top-4 left-4 z-20 bg-white rounded-lg shadow-sm px-4 py-2 flex items-center gap-2 text-sm">
@@ -152,14 +163,14 @@ const WorkflowPage = () => {
         />
       </div>
 
-      <WorkflowReactFlowProvider>
+      <ReactFlowProvider>
         {workflowData && (
           <WorkflowContainer
             workflowId={workflowId}
             initialData={workflowData}
           />
         )}
-      </WorkflowReactFlowProvider>
+      </ReactFlowProvider>
 
       {isPanelOpen && (
         <div
@@ -182,6 +193,15 @@ const WorkflowPage = () => {
           100% {
             transform: translateX(0);
             opacity: 1;
+          }
+        }
+        @keyframes pulse {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
           }
         }
       `}</style>

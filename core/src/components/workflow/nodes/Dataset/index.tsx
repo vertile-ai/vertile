@@ -15,13 +15,17 @@ import {
   Database,
 } from '@phosphor-icons/react';
 import { DatasetNode } from './types';
+import { IOType } from '../../io.types';
 
 export interface DatasetNodeType extends CommonNodeType {
   datasetName: string;
+  description?: string;
 }
 
 export const DatasetDefault: NodeDefault<DatasetNodeType> = {
-  defaultValue: {},
+  defaultValue: {
+    description: 'Provides dataset for processing',
+  },
   getAvailablePrevNodes() {
     return [...ALL_COMPLETION_AVAILABLE_BLOCKS];
   },
@@ -37,33 +41,83 @@ export const DatasetDefault: NodeDefault<DatasetNodeType> = {
 };
 
 const DatasetNodeImpl: FC<DatasetNode> = (data) => {
+  // Define input/output types for the node
+  const inputs = [{ id: 'dataset-input', label: 'Query', ioType: IOType.text }];
+
+  const outputs = [{ id: 'dataset-output', label: 'Data', ioType: IOType.kv }];
+
+  const nodeType = 'Dataset';
+  const description = data.description || 'Provides dataset for processing';
+
   return (
     <div className="flex flex-col space-y-0.5 mb-1 px-3 py-1 w-full text-neutral-900">
-      <div
-        className={
-          'flex items-center px-3 pt-3 pb-2 rounded-t-2xl bg-[rgba(250,252,255,0.9)]'
-        }
-      >
-        <Database className="shrink-0 mr-2" size={16} color={'black'} />
+      {data._runningStatus && (
         <div
-          title={data.title}
-          className="grow mr-1 text-[13px] font-semibold text-gray-700 truncate"
+          className={
+            'flex items-center px-3 pt-3 pb-2 rounded-t-2xl bg-[rgba(250,252,255,0.9)]'
+          }
         >
-          {data.title}
+          {(data._runningStatus === NodeRunningStatus.Running ||
+            data._singleRunningStatus === NodeRunningStatus.Running) && (
+            <SpinnerGap className="w-3.5 h-3.5 text-primary-600 animate-spin" />
+          )}
+          {data._runningStatus === NodeRunningStatus.Succeeded && (
+            <CheckCircle className="w-3.5 h-3.5 text-[#12B76A]" />
+          )}
+          {data._runningStatus === NodeRunningStatus.Failed && (
+            <Warning className="w-3.5 h-3.5" color="#F04438" />
+          )}
         </div>
-        {(data._runningStatus === NodeRunningStatus.Running ||
-          data._singleRunningStatus === NodeRunningStatus.Running) && (
-          <SpinnerGap className="w-3.5 h-3.5 text-primary-600 animate-spin" />
-        )}
-        {data._runningStatus === NodeRunningStatus.Succeeded && (
-          <CheckCircle className="w-3.5 h-3.5 text-[#12B76A]" />
-        )}
-        {data._runningStatus === NodeRunningStatus.Failed && (
-          <Warning className="w-3.5 h-3.5" color="#F04438" />
-        )}
+      )}
+      <div className="h-3/4 px-3 py-2">
+        {/* Pass structured data to BaseNode */}
+        <div className="flex items-center mb-2">
+          <Database className="shrink-0" size={16} color={'black'} />
+          <span className="font-medium ml-2">{nodeType}</span>
+        </div>
+
+        <div className="text-xs text-gray-600 mb-3">{description}</div>
+
+        <div className="flex flex-col gap-2">
+          {/* Input types display */}
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium text-gray-700 min-w-[40px]">
+              Input:
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {inputs.map((input, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-100"
+                >
+                  {input.label}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Output types display */}
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium text-gray-700 min-w-[40px]">
+              Output:
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {outputs.map((output, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700 border border-green-100"
+                >
+                  {output.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 text-xs font-medium text-gray-700">
+          {data.datasetName}
+        </div>
       </div>
-      <div className="w-px bg-gray-700"></div>
-      <div className="h-3/4">{data.datasetName}</div>
     </div>
   );
 };

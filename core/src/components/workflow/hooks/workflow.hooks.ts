@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { Workflow, WorkflowNode, WorkflowEdge } from '@prisma/client';
+import { WorkflowClient } from '@/app/lib/common/workflow.types';
 import { WorkflowWithRelations } from '@/app/workflows/[id]/types';
 
 export function useWorkflow() {
@@ -28,7 +29,7 @@ export function useWorkflow() {
 
   // Fetch a single workflow by ID
   const fetchWorkflow = useCallback(
-    async (id: string): Promise<WorkflowWithRelations | null> => {
+    async (id: string): Promise<WorkflowClient | null> => {
       setLoading(true);
       setError(null);
       try {
@@ -48,9 +49,7 @@ export function useWorkflow() {
   );
 
   // Create a new workflow
-  const createWorkflow = async (
-    data: any
-  ): Promise<WorkflowWithRelations | null> => {
+  const createWorkflow = async (data: any): Promise<WorkflowClient | null> => {
     setLoading(true);
     setError(null);
     try {
@@ -78,7 +77,7 @@ export function useWorkflow() {
 
   // Update an existing workflow
   const updateWorkflow = useCallback(
-    async (id: string, data: any): Promise<WorkflowWithRelations | null> => {
+    async (id: string, data: any): Promise<WorkflowClient | null> => {
       setLoading(true);
       setError(null);
 
@@ -92,9 +91,10 @@ export function useWorkflow() {
           body: JSON.stringify(data),
         });
 
-        if (!response.ok) {
+        if (!response.ok || response.status >= 400) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update workflow');
+          console.warn('Failed to patch workflow', errorData);
+          return null;
         }
 
         return await response.json();

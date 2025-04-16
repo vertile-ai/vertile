@@ -11,20 +11,28 @@ export const workflowNodeSchema = z.object({
 
 export const workflowEdgeSchema = z.object({
   id: z.string().optional(),
-  sourceNodeId: z.string(),
-  targetNodeId: z.string(),
-  data: z.object({
-    _hovering: z.boolean().optional(),
-    connectedNodeIsEntered: z.boolean().optional(),
-    _connectedNodeIsSelected: z.boolean().optional(),
-    _runned: z.boolean().optional(),
-    _isBundled: z.boolean().optional(),
-    sourceType: z.nativeEnum(BlockEnum),
-    targetType: z.nativeEnum(BlockEnum),
-  }),
+  type: z.string().optional(),
+  source: z.string(),
+  target: z.string(),
+  sourceHandle: z.string().optional(),
+  targetHandle: z.string().optional(),
+  data: z
+    .object({
+      _hovering: z.boolean().optional(),
+      connectedNodeIsEntered: z.boolean().optional(),
+      _connectedNodeIsSelected: z.boolean().optional(),
+      isInIteration: z.boolean().optional(),
+      _runned: z.boolean().optional(),
+      _isBundled: z.boolean().optional(),
+      sourceType: z.nativeEnum(BlockEnum).optional(),
+      targetType: z.nativeEnum(BlockEnum).optional(),
+    })
+    .optional()
+    .default({}),
 });
 
 export const createWorkflowSchema = z.object({
+  id: z.string().optional(),
   name: z.string().min(1, 'Workflow name is required'),
   description: z.string().optional(),
   zoom: z.number().default(1),
@@ -40,5 +48,10 @@ export const updateWorkflowSchema = z.object({
   edges: z.array(workflowEdgeSchema).optional(),
 });
 
+export const fetchWorkflowSchema = z.object({
+  id: z.string(),
+});
+
 export type CreateWorkflowInput = z.infer<typeof createWorkflowSchema>;
 export type UpdateWorkflowInput = z.infer<typeof updateWorkflowSchema>;
+export type FetchWorkflowInput = z.infer<typeof fetchWorkflowSchema>;

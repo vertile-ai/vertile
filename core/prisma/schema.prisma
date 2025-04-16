@@ -19,6 +19,8 @@ model Workflow {
   updatedAt   DateTime       @updatedAt
   nodes       WorkflowNode[]
   edges       WorkflowEdge[]
+
+  @@unique(id)
 }
 
 model WorkflowNode {
@@ -29,8 +31,6 @@ model WorkflowNode {
   positionY  Int
   type       String // The type of node
   data       Json // The custom node data
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
 
   @@unique(id)
 }
@@ -40,8 +40,11 @@ model WorkflowEdge {
   workflow     Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   workflowId   String
   data         Json // The custom edge data
-  sourceNodeId String
-  targetNodeId String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  sourceHandle String?
+  targetHandle String?
+  source       String
+  target       String
+  type         String?
+
+  @@unique(id)
 }

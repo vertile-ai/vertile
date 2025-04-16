@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Workflow } from '@prisma/client';
 import { useWorkflow } from '@/src/components/workflow/hooks/workflow.hooks';
 import { formatDistanceToNow } from 'date-fns';
-import { PlusCircle, Trash, Pencil, DownloadSimple, Circuitry } from '@phosphor-icons/react';
+import {
+  PlusCircle,
+  Trash,
+  Pencil,
+  DownloadSimple,
+  Circuitry,
+} from '@phosphor-icons/react';
 
 export default function WorkflowsPage() {
   const router = useRouter();
@@ -28,7 +34,7 @@ export default function WorkflowsPage() {
       setIsDeleting(id);
       const success = await deleteWorkflow(id);
       if (success) {
-        setWorkflows(prev => prev.filter(workflow => workflow.id !== id));
+        setWorkflows((prev) => prev.filter((workflow) => workflow.id !== id));
       }
       setIsDeleting(null);
     }
@@ -41,10 +47,12 @@ export default function WorkflowsPage() {
 
   const handleExport = (workflow: Workflow, event: React.MouseEvent) => {
     event.stopPropagation();
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(workflow));
+    const dataStr =
+      'data:text/json;charset=utf-8,' +
+      encodeURIComponent(JSON.stringify(workflow));
     const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `${workflow.name}.json`);
+    downloadAnchorNode.setAttribute('href', dataStr);
+    downloadAnchorNode.setAttribute('download', `${workflow.name}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -70,7 +78,10 @@ export default function WorkflowsPage() {
       )}
 
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 mb-8" role="alert">
+        <div
+          className="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 mb-8"
+          role="alert"
+        >
           <p className="font-bold">Error</p>
           <p>{error}</p>
         </div>
@@ -81,8 +92,12 @@ export default function WorkflowsPage() {
           <div className="mx-auto w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-4">
             <Circuitry size={48} color="#3B82F6" weight="duotone" />
           </div>
-          <h3 className="text-xl font-medium text-gray-800 mb-2">No workflows yet</h3>
-          <p className="text-gray-600 mb-6">Create your first workflow to get started</p>
+          <h3 className="text-xl font-medium text-gray-800 mb-2">
+            No workflows yet
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Create your first workflow to get started
+          </p>
           <button
             onClick={() => router.push('/workflows/new')}
             className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200"
@@ -107,11 +122,16 @@ export default function WorkflowsPage() {
                 {workflow.name}
               </h3>
               {workflow.description && (
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">{workflow.description}</p>
+                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                  {workflow.description}
+                </p>
               )}
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-500">
-                  Updated {formatDistanceToNow(new Date(workflow.updatedAt), { addSuffix: true })}
+                  Updated{' '}
+                  {formatDistanceToNow(new Date(workflow.updatedAt), {
+                    addSuffix: true,
+                  })}
                 </span>
                 <div className="flex space-x-2">
                   <button
@@ -131,7 +151,9 @@ export default function WorkflowsPage() {
                   <button
                     onClick={(e) => handleDelete(workflow.id, e)}
                     className={`text-gray-500 hover:text-red-500 p-1 rounded-full hover:bg-gray-50 ${
-                      isDeleting === workflow.id ? 'opacity-50 cursor-not-allowed' : ''
+                      isDeleting === workflow.id
+                        ? 'opacity-50 cursor-not-allowed'
+                        : ''
                     }`}
                     disabled={isDeleting === workflow.id}
                     title="Delete workflow"
@@ -146,4 +168,4 @@ export default function WorkflowsPage() {
       </div>
     </div>
   );
-} 
+}

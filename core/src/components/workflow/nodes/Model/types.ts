@@ -1,4 +1,4 @@
-import type { GraphNode } from "../../types";
+import type { GraphNode } from '../../types';
 
 export enum ModelType {
   LLAMA = 'llama',
@@ -13,4 +13,5 @@ export interface ModelNode extends GraphNode {
   modelTrainingData?: string;
   modelEvaluationData?: string;
   modelEvaluationResults?: string;
+  description?: string;
 }

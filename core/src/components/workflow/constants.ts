@@ -245,5 +245,3 @@ export const PARAMETER_EXTRACTOR_COMMON_STRUCT: Var[] = [
     type: VarType.string,
   },
 ];
-
-export const WORKFLOW_DATA_UPDATE = 'WORKFLOW_DATA_UPDATE';

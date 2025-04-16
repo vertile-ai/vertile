@@ -1,5 +1,6 @@
-import { GraphNode } from "../../types";
+import { GraphNode } from '../../types';
 
 export interface DatasetNode extends GraphNode {
-    datasetName: string;
-  };
+  datasetName: string;
+  description?: string;
+}

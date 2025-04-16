@@ -1,6 +1,7 @@
 import prisma from '@/app/lib/prisma';
 import { Workflow, WorkflowNode, WorkflowEdge } from '@prisma/client';
 import { CreateWorkflowInput, UpdateWorkflowInput } from './validation';
+import { v4 } from 'uuid';
 
 type WorkflowWithRelations = Workflow & {
   nodes: WorkflowNode[];
@@ -26,11 +27,7 @@ export const workflowService = {
           })),
         },
         edges: {
-          create: data.edges.map((edge) => ({
-            sourceNodeId: edge.sourceNodeId,
-            targetNodeId: edge.targetNodeId,
-            data: edge.data,
-          })),
+          create: data.edges,
         },
       },
       include: {
@@ -121,32 +118,15 @@ export const workflowService = {
             });
 
             if (existingNode) {
-              // Update existing node
-              console.log(
-                `Updating node: ${{
-                  type: node.type,
-                  positionX: node.positionX,
-                  positionY: node.positionY,
-                  data: node.data,
-                }}`
-              );
               await tx.workflowNode.update({
                 where: { id: node.id },
-                data: {
-                  type: node.type,
-                  positionX: node.positionX,
-                  positionY: node.positionY,
-                  data: node.data,
-                },
+                data: node,
               });
             } else {
-              // Node with provided ID not found, create a new one
-              console.log(
-                `Node with ID ${node.id} not found, creating new node`
-              );
               await tx.workflowNode.create({
                 data: {
                   workflowId: id,
+                  id: node.id,
                   type: node.type,
                   positionX: node.positionX,
                   positionY: node.positionY,
@@ -159,6 +139,7 @@ export const workflowService = {
             await tx.workflowNode.create({
               data: {
                 workflowId: id,
+                id: node.id,
                 type: node.type,
                 positionX: node.positionX,
                 positionY: node.positionY,
@@ -193,6 +174,9 @@ export const workflowService = {
 
         // Upsert each edge
         for (const edge of data.edges) {
+          const source = edge.source;
+          const target = edge.target;
+
           if (edge.id) {
             // Check if edge exists before updating
             const existingEdge = await tx.workflowEdge.findUnique({
@@ -204,21 +188,23 @@ export const workflowService = {
               await tx.workflowEdge.update({
                 where: { id: edge.id },
                 data: {
-                  sourceNodeId: edge.sourceNodeId,
-                  targetNodeId: edge.targetNodeId,
+                  source,
+                  target,
+                  sourceHandle: edge.sourceHandle,
+                  targetHandle: edge.targetHandle,
+                  data: edge.data || {},
                 },
               });
             } else {
-              // Edge with provided ID not found, create a new one
-              console.log(
-                `Edge with ID ${edge.id} not found, creating new edge`
-              );
               await tx.workflowEdge.create({
                 data: {
                   workflowId: id,
-                  sourceNodeId: edge.sourceNodeId,
-                  targetNodeId: edge.targetNodeId,
-                  data: edge.data,
+                  id: edge.id,
+                  source,
+                  target,
+                  sourceHandle: edge.sourceHandle,
+                  targetHandle: edge.targetHandle,
+                  data: edge.data || {},
                 },
               });
             }
@@ -227,9 +213,7 @@ export const workflowService = {
             await tx.workflowEdge.create({
               data: {
                 workflowId: id,
-                sourceNodeId: edge.sourceNodeId,
-                targetNodeId: edge.targetNodeId,
-                data: edge.data,
+                ...edge,
               },
             });
           }

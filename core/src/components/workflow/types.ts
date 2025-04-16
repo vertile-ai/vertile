@@ -133,17 +133,12 @@ export enum BlockEnum {
   Dataset = 'dataset',
   Model = 'model',
   Prompt = 'prompt',
-
 }
 
 export type Branch = {
   id: string;
   name: string;
 };
-
-
-export type CustomNodeType = 'custom';
-
 
 export type CommonNodeType = {
   connectedSourceHandleIds?: string[];
@@ -157,7 +152,7 @@ export type CommonNodeType = {
   selected?: boolean;
   type: BlockEnum;
   title: string;
-}
+};
 
 export type CommonEdgeType = {
   _hovering?: boolean;
@@ -167,7 +162,7 @@ export type CommonEdgeType = {
   _isBundled?: boolean;
   sourceType: BlockEnum;
   targetType: BlockEnum;
-}
+};
 
 export type AllNodeTypes = StartNode | DatasetNode | ModelNode | TrainNode;
 export interface GraphNode extends CommonNodeType {
@@ -176,11 +171,13 @@ export interface GraphNode extends CommonNodeType {
   desc?: string;
 }
 
-
 export type Node<T extends AllNodeTypes = AllNodeTypes> = ReactFlowNode<T>;
-export type SelectedNode<T extends AllNodeTypes = AllNodeTypes> = Pick<Node<T>, 'id' | 'data'>;
+export type SelectedNode<T extends AllNodeTypes = AllNodeTypes> = Pick<
+  Node<T>,
+  'id' | 'data'
+>;
 export interface NodeProps<T extends AllNodeTypes = AllNodeTypes> {
-  id: string; 
+  id: string;
   data: T;
 }
 export interface NodePanelProps<T extends AllNodeTypes = AllNodeTypes> {
@@ -188,7 +185,6 @@ export interface NodePanelProps<T extends AllNodeTypes = AllNodeTypes> {
   data: T;
 }
 export type Edge = ReactFlowEdge<CommonEdgeType>;
-
 
 export interface GraphEdge {
   id: string;

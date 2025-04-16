@@ -13,21 +13,6 @@ type BaseNodeProps = {
 const BaseNode: FC<BaseNodeProps> = ({ id, data, children, className }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
 
-  const [nodeHeight, setNodeHeight] = useState(0);
-
-  useEffect(() => {
-    if (!nodeRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setNodeHeight(entry.contentRect.height);
-      }
-    });
-
-    resizeObserver.observe(nodeRef.current);
-    return () => resizeObserver.disconnect();
-  }, []);
-
   const showSelectedBorder = data.selected || data._isEntering;
   const { showRunningBorder, showSuccessBorder, showFailedBorder } =
     useMemo(() => {
@@ -47,7 +32,7 @@ const BaseNode: FC<BaseNodeProps> = ({ id, data, children, className }) => {
   return (
     <div
       className={cn(
-        'flex border-[2px] rounded-2xl',
+        'flex border-[2px]',
         showSelectedBorder ? 'border-primary-600' : 'border-transparent',
         className
       )}
@@ -56,7 +41,7 @@ const BaseNode: FC<BaseNodeProps> = ({ id, data, children, className }) => {
       <div
         className={cn(
           'group relative pb-1 shadow-xs',
-          'border border-transparent rounded-[15px]',
+          'border border-transparent',
           'w-[240px] bg-white text-gray-800',
           !data._runningStatus && 'hover:shadow-lg',
           showRunningBorder && '!border-primary-500',
@@ -82,10 +67,6 @@ const BaseNode: FC<BaseNodeProps> = ({ id, data, children, className }) => {
         )}
         {!data._runningStatus && <NodeControl id={id} data={data} />}
         {cloneElement(children, { id, data })}
-
-        <div className="px-3 pt-1 pb-2 text-xs leading-[18px] text-gray-600 whitespace-pre-line break-words">
-          {data.desc}
-        </div>
       </div>
     </div>
   );

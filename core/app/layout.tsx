@@ -25,26 +25,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js" />
+      </head>
       <body className={inter.className}>
-          <div className="flex h-screen">
-            <div
-              className="w-12 flex-shrink-0 flex flex-col items-center justify-between"
-            >
-              <Sidebar />
-            </div>
-            <div className="flex flex-col h-full w-full overflow-y-hidden">
-              <div className="h-12 flex-shrink-0">
-                <Header />
-              </div>
-
-              {/* Main content */}
-              <div className="flex-1 overflow-y-auto bg-slate-50">
-                {children}
-              </div>
-            </div>
-  
-            <ToastContainer />
+        <div className="flex h-screen">
+          <div className="w-12 flex-shrink-0 flex flex-col items-center justify-between">
+            <Sidebar />
           </div>
+          <div className="flex flex-col h-full w-full overflow-y-hidden">
+            <div className="h-12 flex-shrink-0">
+              <Header />
+            </div>
+
+            {/* Main content */}
+            <div className="flex-1 overflow-y-auto bg-slate-50">{children}</div>
+          </div>
+
+          <ToastContainer />
+        </div>
       </body>
     </html>
   );

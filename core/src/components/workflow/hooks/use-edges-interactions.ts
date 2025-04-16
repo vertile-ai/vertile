@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import produce from 'immer';
 import type { EdgeMouseHandler, OnEdgesChange } from 'reactflow';
 import { useStoreApi } from 'reactflow';
@@ -7,14 +7,26 @@ import { getNodesConnectedSourceOrTargetHandleIdsMap } from '../utils';
 
 export const useEdgesInteractions = () => {
   const store = useStoreApi();
+  // Track current hovered edge to avoid unnecessary updates
+  const hoveredEdgeRef = useRef<string | null>(null);
 
   const handleEdgeEnter = useCallback<EdgeMouseHandler>(
     (_, edge) => {
-      const { edges, setEdges } = store.getState();
-      const newEdges = produce(edges, (draft) => {
-        const currentEdge = draft.find((e) => e.id === edge.id)!;
+      // Skip if already hovering this edge
+      if (hoveredEdgeRef.current === edge.id) return;
 
-        currentEdge.data._hovering = true;
+      hoveredEdgeRef.current = edge.id;
+      const { edges, setEdges } = store.getState();
+
+      // Only update the specific edge
+      const newEdges = produce(edges, (draft) => {
+        const currentEdge = draft.find((e) => e.id === edge.id);
+        if (currentEdge) {
+          currentEdge.data = {
+            ...currentEdge.data,
+            _hovering: true,
+          };
+        }
       });
       setEdges(newEdges);
     },
@@ -23,11 +35,24 @@ export const useEdgesInteractions = () => {
 
   const handleEdgeLeave = useCallback<EdgeMouseHandler>(
     (_, edge) => {
-      const { edges, setEdges } = store.getState();
-      const newEdges = produce(edges, (draft) => {
-        const currentEdge = draft.find((e) => e.id === edge.id)!;
+      // Clear hover state
+      hoveredEdgeRef.current = null;
 
-        currentEdge.data._hovering = false;
+      const { edges, setEdges } = store.getState();
+
+      // Skip update if edge doesn't exist or isn't hovering
+      const currentEdge = edges.find((e) => e.id === edge.id);
+      if (!currentEdge || !currentEdge.data?._hovering) return;
+
+      // Only update the specific edge
+      const newEdges = produce(edges, (draft) => {
+        const edgeToUpdate = draft.find((e) => e.id === edge.id);
+        if (edgeToUpdate) {
+          edgeToUpdate.data = {
+            ...edgeToUpdate.data,
+            _hovering: false,
+          };
+        }
       });
       setEdges(newEdges);
     },

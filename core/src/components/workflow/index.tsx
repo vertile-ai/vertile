@@ -41,9 +41,11 @@ import { NodeSelector } from './NodeSelector.component';
 import { v4 } from 'uuid';
 import { WorkflowWithRelations } from '@/app/workflows/[id]/types';
 
+// Define nodeTypes and edgeTypes outside the component to prevent recreating on every render
 const nodeTypes: Record<CustomNodeType, React.FC> = {
   custom: CustomNode,
 };
+
 const edgeTypes = {
   custom: CustomEdge,
 };
@@ -159,36 +161,50 @@ const Workflow: FC<WorkflowProps> = memo(
       return () => clearInterval(interval);
     }, [store, reactflow, initialData, handleWorkflowChange]);
 
-    // Now safely patch the handlers after they've been initialized
-    // Create local patched variables to avoid direct reassignment
-    const patchedHandleNodeDragStop = useCallback(
-      (event: any, node: any, nodes: any) => {
+    // Create memoized versions of handlers to prevent rerenders
+    const memoizedHandleNodeDragStop = useMemo(() => {
+      return (event: any, node: any, nodes: any) => {
         if (handleNodeDragStop) {
           handleNodeDragStop(event, node, nodes);
         }
         shouldUpdateRef.current = true;
-      },
-      [handleNodeDragStop]
-    );
+      };
+    }, [handleNodeDragStop]);
 
-    const patchedHandleNodeConnect = useCallback(
-      (connection: any) => {
+    const memoizedHandleNodeConnect = useMemo(() => {
+      return (connection: any) => {
         if (handleNodeConnect) {
           handleNodeConnect(connection);
         }
         shouldUpdateRef.current = true;
-      },
-      [handleNodeConnect]
-    );
+      };
+    }, [handleNodeConnect]);
 
-    const patchedHandleEdgesChange = useCallback(
-      (changes: any) => {
+    const memoizedHandleEdgesChange = useMemo(() => {
+      return (changes: any) => {
         if (handleEdgesChange) {
           handleEdgesChange(changes);
         }
         shouldUpdateRef.current = true;
-      },
-      [handleEdgesChange]
+      };
+    }, [handleEdgesChange]);
+
+    // Memoize hover handlers to prevent unnecessary rerenders
+    const memoizedHandleNodeEnter = useMemo(
+      () => handleNodeEnter,
+      [handleNodeEnter]
+    );
+    const memoizedHandleNodeLeave = useMemo(
+      () => handleNodeLeave,
+      [handleNodeLeave]
+    );
+    const memoizedHandleEdgeEnter = useMemo(
+      () => handleEdgeEnter,
+      [handleEdgeEnter]
+    );
+    const memoizedHandleEdgeLeave = useMemo(
+      () => handleEdgeLeave,
+      [handleEdgeLeave]
     );
 
     // Handle DnD for node creation
@@ -372,6 +388,81 @@ const Workflow: FC<WorkflowProps> = memo(
       const jobId = v4();
     };
 
+    // Memoize ReactFlow props to prevent unnecessary rerenders
+    const reactFlowProps = useMemo(
+      () => ({
+        nodeTypes,
+        edgeTypes,
+        nodes: flowNodes,
+        edges: flowEdges,
+        onNodeDragStart: handleNodeDragStart,
+        onNodeDrag: handleNodeDrag,
+        onNodeDragStop: memoizedHandleNodeDragStop,
+        onNodeMouseEnter: memoizedHandleNodeEnter,
+        onNodeMouseLeave: memoizedHandleNodeLeave,
+        onNodeClick: handleNodeClick,
+        onNodeContextMenu: handleNodeContextMenu,
+        onConnect: memoizedHandleNodeConnect,
+        onConnectStart: handleNodeConnectStart,
+        onConnectEnd: handleNodeConnectEnd,
+        onEdgeMouseEnter: memoizedHandleEdgeEnter,
+        onEdgeMouseLeave: memoizedHandleEdgeLeave,
+        onEdgesChange: memoizedHandleEdgesChange,
+        onSelectionStart: handleSelectionStart,
+        onSelectionChange: handleSelectionChange,
+        onSelectionDrag: handleSelectionDrag,
+        onPaneContextMenu: handlePaneContextMenu,
+        connectionLineType: ConnectionLineType.Bezier,
+        connectionLineStyle: { stroke: '#6366f1', strokeWidth: 2 },
+        connectionLineComponent: CustomConnectionLine,
+        connectionLineContainerStyle: { zIndex: ITERATION_CHILDREN_Z_INDEX },
+        defaultViewport: initialViewport,
+        multiSelectionKeyCode: null,
+        deleteKeyCode: null,
+        nodesDraggable: !nodesReadOnly,
+        nodesConnectable: !nodesReadOnly,
+        nodesFocusable: !nodesReadOnly,
+        edgesFocusable: !nodesReadOnly,
+        panOnDrag: controlMode === 'hand',
+        zoomOnPinch: true,
+        zoomOnScroll: true,
+        zoomOnDoubleClick: true,
+        isValidConnection: isValidConnection,
+        selectionKeyCode: null,
+        selectionMode: SelectionMode.Partial,
+        selectionOnDrag: controlMode === 'pointer',
+        minZoom: 0.25,
+        fitView: true,
+        fitViewOptions: { padding: 0.2 },
+        proOptions: { hideAttribution: true },
+      }),
+      [
+        flowNodes,
+        flowEdges,
+        handleNodeDragStart,
+        handleNodeDrag,
+        memoizedHandleNodeDragStop,
+        memoizedHandleNodeEnter,
+        memoizedHandleNodeLeave,
+        handleNodeClick,
+        handleNodeContextMenu,
+        memoizedHandleNodeConnect,
+        handleNodeConnectStart,
+        handleNodeConnectEnd,
+        memoizedHandleEdgeEnter,
+        memoizedHandleEdgeLeave,
+        memoizedHandleEdgesChange,
+        handleSelectionStart,
+        handleSelectionChange,
+        handleSelectionDrag,
+        handlePaneContextMenu,
+        initialViewport,
+        nodesReadOnly,
+        controlMode,
+        isValidConnection,
+      ]
+    );
+
     return (
       <div
         id="workflow-container"
@@ -383,21 +474,17 @@ const Workflow: FC<WorkflowProps> = memo(
         onDragOver={(e) => {
           e.preventDefault();
           e.dataTransfer.dropEffect = 'move';
-          // Add a subtle highlight effect when dragging over the workflow area
           e.currentTarget.classList.add('bg-indigo-50', 'bg-opacity-30');
         }}
         onDragLeave={(e) => {
-          // Remove the highlight effect when dragging leaves the workflow area
           e.currentTarget.classList.remove('bg-indigo-50', 'bg-opacity-30');
         }}
         onDrop={(e) => {
           e.preventDefault();
-          // Remove the highlight effect when dropping
           e.currentTarget.classList.remove('bg-indigo-50', 'bg-opacity-30');
 
           const type = e.dataTransfer.getData('nodeType') as BlockEnum;
           if (type) {
-            // Create a brief flash effect at the drop position
             const flashElement = document.createElement('div');
             flashElement.style.position = 'absolute';
             flashElement.style.left = `${e.clientX - 20}px`;
@@ -410,7 +497,6 @@ const Workflow: FC<WorkflowProps> = memo(
             flashElement.style.transition = 'all 0.3s ease-out';
             document.body.appendChild(flashElement);
 
-            // Animate and remove the flash element
             setTimeout(() => {
               flashElement.style.transform = 'scale(2)';
               flashElement.style.opacity = '0';
@@ -419,7 +505,6 @@ const Workflow: FC<WorkflowProps> = memo(
               }, 300);
             }, 10);
 
-            // Create the actual node
             handleNodeDrop(type, { x: e.clientX, y: e.clientY });
           }
         }}
@@ -435,52 +520,7 @@ const Workflow: FC<WorkflowProps> = memo(
           <NodeSelector />
         </div>
         <Operator />
-        <ReactFlow
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          nodes={flowNodes}
-          edges={flowEdges}
-          onNodeDragStart={handleNodeDragStart}
-          onNodeDrag={handleNodeDrag}
-          onNodeDragStop={patchedHandleNodeDragStop}
-          onNodeMouseEnter={handleNodeEnter}
-          onNodeMouseLeave={handleNodeLeave}
-          onNodeClick={handleNodeClick}
-          onNodeContextMenu={handleNodeContextMenu}
-          onConnect={patchedHandleNodeConnect}
-          onConnectStart={handleNodeConnectStart}
-          onConnectEnd={handleNodeConnectEnd}
-          onEdgeMouseEnter={handleEdgeEnter}
-          onEdgeMouseLeave={handleEdgeLeave}
-          onEdgesChange={patchedHandleEdgesChange}
-          onSelectionStart={handleSelectionStart}
-          onSelectionChange={handleSelectionChange}
-          onSelectionDrag={handleSelectionDrag}
-          onPaneContextMenu={handlePaneContextMenu}
-          connectionLineType={ConnectionLineType.Bezier}
-          connectionLineStyle={{ stroke: '#6366f1', strokeWidth: 2 }}
-          connectionLineComponent={CustomConnectionLine}
-          connectionLineContainerStyle={{ zIndex: ITERATION_CHILDREN_Z_INDEX }}
-          defaultViewport={initialViewport}
-          multiSelectionKeyCode={null}
-          deleteKeyCode={null}
-          nodesDraggable={!nodesReadOnly}
-          nodesConnectable={!nodesReadOnly}
-          nodesFocusable={!nodesReadOnly}
-          edgesFocusable={!nodesReadOnly}
-          panOnDrag={controlMode === 'hand'}
-          zoomOnPinch={true}
-          zoomOnScroll={true}
-          zoomOnDoubleClick={true}
-          isValidConnection={isValidConnection}
-          selectionKeyCode={null}
-          selectionMode={SelectionMode.Partial}
-          selectionOnDrag={controlMode === 'pointer'}
-          minZoom={0.25}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-          proOptions={{ hideAttribution: true }}
-        >
+        <ReactFlow {...reactFlowProps}>
           <Background gap={[14, 14]} size={2} color="#9CA3AF" />
         </ReactFlow>
       </div>
@@ -500,16 +540,15 @@ const WorkflowContainer = ({
 }: WorkflowContainerProps) => {
   return (
     <Workflow
-      nodes={[]} // Empty array as we'll handle nodes/edges setup from initialData inside the component
-      edges={[]} // Empty array as we'll handle nodes/edges setup from initialData inside the component
-      viewport={{ x: 0, y: 0, zoom: 1 }} // Default viewport
+      nodes={[]}
+      edges={[]}
+      viewport={{ x: 0, y: 0, zoom: 1 }}
       workflowId={workflowId}
       initialData={initialData}
     />
   );
 };
 
-// Export the ReactFlowProvider for use in other components
 export const WorkflowReactFlowProvider = ReactFlowProvider;
 
 export default memo(WorkflowContainer);

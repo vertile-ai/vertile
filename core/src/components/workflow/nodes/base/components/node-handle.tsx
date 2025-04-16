@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import { Handle, Position } from 'reactflow';
 import { BlockEnum } from '../../../types';
 import type { Node } from '../../../types';
@@ -18,6 +18,7 @@ type NodeHandleProps = {
   nodeSelectorClassName?: string;
 } & Pick<Node, 'id' | 'data'>;
 
+// Optimized target handle to prevent rerenders on hover
 export const NodeTargetHandle = memo(
   ({
     id,
@@ -33,16 +34,16 @@ export const NodeTargetHandle = memo(
     const { availablePrevBlocks } = useAvailableBlocks(data.type);
     const isConnectable = !!availablePrevBlocks.length;
 
+    // Memoize callbacks to prevent recreating on every render
     const handleOpenChange = useCallback((v: boolean) => {
       setOpen(v);
     }, []);
-    const handleHandleClick = useCallback(
-      (e: MouseEvent) => {
-        e.stopPropagation();
-        setOpen((v) => !v);
-      },
-      [connected]
-    );
+
+    const handleHandleClick = useCallback((e: MouseEvent) => {
+      e.stopPropagation();
+      setOpen((v) => !v);
+    }, []);
+
     const handleSelect = useCallback(
       (type: BlockEnum, toolDefaultValue?: ToolDefaultValue) => {
         handleNodeAdd(
@@ -59,20 +60,38 @@ export const NodeTargetHandle = memo(
       [handleNodeAdd, id, handleId]
     );
 
+    // Memoize class names to prevent string concatenation on every render
+    const handleClassName1 = useMemo(
+      () => `
+      !w-4 !h-4 !bg-transparent !rounded-none !outline-none !border-none z-[1]
+      after:absolute after:w-0.5 after:h-2 after:left-1.5 after:top-1 after:bg-primary-500
+      hover:scale-125 transition-all
+      ${!connected && 'after:opacity-0'}
+      ${data.type === BlockEnum.Start && 'opacity-0'}
+      ${handleClassName}
+    `,
+      [connected, data.type, handleClassName]
+    );
+
+    // Memoize node selector trigger class name function
+    const nodeSelectorTriggerClassName = useCallback(
+      (isOpen: boolean) => `
+      hidden absolute left-0 top-0 pointer-events-none
+      ${nodeSelectorClassName}
+      group-hover:!flex
+      ${data.selected && '!flex'}
+      ${isOpen && '!flex'}
+    `,
+      [nodeSelectorClassName, data.selected]
+    );
+
     return (
       <>
         <Handle
           id={handleId}
           type="target"
           position={Position.Left}
-          className={`
-          !w-4 !h-4 !bg-transparent !rounded-none !outline-none !border-none z-[1]
-          after:absolute after:w-0.5 after:h-2 after:left-1.5 after:top-1 after:bg-primary-500
-          hover:scale-125 transition-all
-          ${!connected && 'after:opacity-0'}
-          ${data.type === BlockEnum.Start && 'opacity-0'}
-          ${handleClassName}
-        `}
+          className={handleClassName1}
           isConnectable={isConnectable}
           onClick={handleHandleClick}
         >
@@ -83,13 +102,7 @@ export const NodeTargetHandle = memo(
               onSelect={handleSelect}
               asChild
               placement="left"
-              triggerClassName={(open) => `
-                hidden absolute left-0 top-0 pointer-events-none
-                ${nodeSelectorClassName}
-                group-hover:!flex
-                ${data.selected && '!flex'}
-                ${open && '!flex'}
-              `}
+              triggerClassName={nodeSelectorTriggerClassName}
               availableBlocksTypes={availablePrevBlocks}
             />
           )}
@@ -100,6 +113,7 @@ export const NodeTargetHandle = memo(
 );
 NodeTargetHandle.displayName = 'NodeTargetHandle';
 
+// Optimized source handle to prevent rerenders on hover
 export const NodeSourceHandle = memo(
   ({
     id,
@@ -114,18 +128,18 @@ export const NodeSourceHandle = memo(
     const { getNodesReadOnly } = useNodesReadOnly();
     const { availableNextBlocks } = useAvailableBlocks(data.type);
     const isConnectable = !!availableNextBlocks.length;
-
     const connected = data.connectedSourceHandleIds?.includes(handleId);
+
+    // Memoize callbacks to prevent recreating on every render
     const handleOpenChange = useCallback((v: boolean) => {
       setOpen(v);
     }, []);
-    const handleHandleClick = useCallback(
-      (e: MouseEvent) => {
-        e.stopPropagation();
-        setOpen((v) => !v);
-      },
-      [connected]
-    );
+
+    const handleHandleClick = useCallback((e: MouseEvent) => {
+      e.stopPropagation();
+      setOpen((v) => !v);
+    }, []);
+
     const handleSelect = useCallback(
       (type: BlockEnum, toolDefaultValue?: ToolDefaultValue) => {
         handleNodeAdd(
@@ -146,19 +160,37 @@ export const NodeSourceHandle = memo(
       if (notInitialWorkflow && data.type === BlockEnum.Start) setOpen(true);
     }, [notInitialWorkflow, data.type]);
 
+    // Memoize class names to prevent string concatenation on every render
+    const handleClassName1 = useMemo(
+      () => `
+      !w-4 !h-4 !bg-transparent !rounded-none !outline-none !border-none z-[1]
+      after:absolute after:w-0.5 after:h-2 after:left-1.5 after:top-1 after:bg-primary-500
+      hover:scale-125 transition-all
+      ${!connected && 'after:opacity-0'}
+      ${handleClassName}
+    `,
+      [connected, handleClassName]
+    );
+
+    // Memoize node selector trigger class name function
+    const nodeSelectorTriggerClassName = useCallback(
+      (isOpen: boolean) => `
+      hidden absolute top-0 left-0 pointer-events-none 
+      ${nodeSelectorClassName}
+      group-hover:!flex
+      ${data.selected && '!flex'}
+      ${isOpen && '!flex'}
+    `,
+      [nodeSelectorClassName, data.selected]
+    );
+
     return (
       <>
         <Handle
           id={handleId}
           type="source"
           position={Position.Right}
-          className={`
-          !w-4 !h-4 !bg-transparent !rounded-none !outline-none !border-none z-[1]
-          after:absolute after:w-0.5 after:h-2 after:left-1.5 after:top-1 after:bg-primary-500
-          hover:scale-125 transition-all
-          ${!connected && 'after:opacity-0'}
-          ${handleClassName}
-        `}
+          className={handleClassName1}
           isConnectable={isConnectable}
           onClick={handleHandleClick}
         >
@@ -168,13 +200,7 @@ export const NodeSourceHandle = memo(
               onOpenChange={handleOpenChange}
               onSelect={handleSelect}
               asChild
-              triggerClassName={(open) => `
-                hidden absolute top-0 left-0 pointer-events-none 
-                ${nodeSelectorClassName}
-                group-hover:!flex
-                ${data.selected && '!flex'}
-                ${open && '!flex'}
-              `}
+              triggerClassName={nodeSelectorTriggerClassName}
               availableBlocksTypes={availableNextBlocks}
             />
           )}

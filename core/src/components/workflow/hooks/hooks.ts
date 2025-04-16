@@ -468,14 +468,17 @@ export const useNodesInteractions = () => {
       const { connectingNodePayload } = workflowStore.getState();
 
       if (connectingNodePayload?.nodeId === node.id) return;
-      const newEdges = produce(edges, (draft) => {
-        const connectedEdges = getConnectedEdges([node], edges);
 
+      const connectedEdges = getConnectedEdges([node], edges);
+      if (connectedEdges.length === 0) return;
+
+      const newEdges = produce(edges, (draft) => {
         connectedEdges.forEach((edge) => {
           const currentEdge = draft.find((e) => e.id === edge.id);
           if (currentEdge) currentEdge.data.connectedNodeIsEntered = true;
         });
       });
+
       setEdges(newEdges);
     },
     [store, workflowStore, getNodesReadOnly]
@@ -486,19 +489,36 @@ export const useNodesInteractions = () => {
 
     const { setEnteringNodePayload } = workflowStore.getState();
     setEnteringNodePayload(undefined);
+
     const { getNodes, setNodes, edges, setEdges } = store.getState();
-    const newNodes = produce(getNodes(), (draft) => {
-      draft.forEach((node) => {
-        node.data._isEntering = false;
+    const nodesWithEntering = getNodes().filter(
+      (node) => node.data._isEntering
+    );
+
+    if (nodesWithEntering.length > 0) {
+      const newNodes = produce(getNodes(), (draft) => {
+        nodesWithEntering.forEach((node) => {
+          const draftNode = draft.find((n) => n.id === node.id);
+          if (draftNode) draftNode.data._isEntering = false;
+        });
       });
-    });
-    setNodes(newNodes);
-    const newEdges = produce(edges, (draft) => {
-      draft.forEach((edge) => {
-        if (edge.data) edge.data.connectedNodeIsEntered = false;
+      setNodes(newNodes);
+    }
+
+    const edgesWithEntered = edges.filter(
+      (edge) => edge.data?.connectedNodeIsEntered
+    );
+
+    if (edgesWithEntered.length > 0) {
+      const newEdges = produce(edges, (draft) => {
+        edgesWithEntered.forEach((edge) => {
+          const draftEdge = draft.find((e) => e.id === edge.id);
+          if (draftEdge && draftEdge.data)
+            draftEdge.data.connectedNodeIsEntered = false;
+        });
       });
-    });
-    setEdges(newEdges);
+      setEdges(newEdges);
+    }
   }, [store, workflowStore, getNodesReadOnly]);
 
   const handleNodeSelect = useCallback(

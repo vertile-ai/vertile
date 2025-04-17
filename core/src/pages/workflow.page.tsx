@@ -2,24 +2,24 @@
 
 import React, { useEffect, useRef, useState, createContext, useCallback } from 'react';
 import Workflow from '@/src/components/workflow';
-import { WorkflowReactFlowProvider } from '@/src/components/workflow';
 import WorkflowContainer from '@/src/components/workflow';
 import ConfiguredNodePanel from '@/src/components/workflow/NodePanelWrapper';
+import { ReactFlowProvider } from 'reactflow';
 
 // Create context to share selected node state across components
 export const SelectedNodeContext = createContext({
   selectedNode: null,
-  setSelectedNode: (node: any) => {},
+  setSelectedNode: (node: any) => { },
 });
 
 const WorkflowPage = () => {
   const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  
+
   // State to track the selected node
   const [selectedNode, setSelectedNode] = useState(null);
-  
+
   // State to track if the panel is open
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -46,10 +46,10 @@ const WorkflowPage = () => {
       return () => window.removeEventListener('resize', handleResize);
     }
   }, []);
-  
+
   // Calculate panel width
   const panelWidth = 320;
-  
+
   // Handle panel close
   const handlePanelClose = () => {
     setIsPanelOpen(false);
@@ -61,7 +61,7 @@ const WorkflowPage = () => {
       handlePanelClose();
     }
   }, [isPanelOpen]);
-  
+
   // Set up click away listener
   useEffect(() => {
     if (isPanelOpen) {
@@ -69,12 +69,12 @@ const WorkflowPage = () => {
     } else {
       document.removeEventListener('mousedown', handleClickAway);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickAway);
     };
   }, [isPanelOpen, handleClickAway]);
-  
+
   // When a node is selected, open the panel
   useEffect(() => {
     if (selectedNode) {
@@ -98,24 +98,24 @@ const WorkflowPage = () => {
       <div className="relative w-full h-screen bg-gray-50">
         {/* Main workflow area - full width and height */}
         <div className="w-full h-full">
-          <WorkflowReactFlowProvider>
+          <ReactFlowProvider>
             <WorkflowContainer />
-          </WorkflowReactFlowProvider>
+          </ReactFlowProvider>
         </div>
-        
+
         {/* Floating Node configuration panel */}
         {isPanelOpen && (
-          <div 
+          <div
             ref={panelRef}
             className="absolute right-4 top-4 bottom-4 transition-all duration-300 ease-in-out z-10"
-            style={{ 
+            style={{
               width: `${panelWidth}px`,
               animation: 'slide-in 0.3s ease-out forwards',
             }}
           >
-            <ConfiguredNodePanel 
-              width={panelWidth} 
-              onClose={handlePanelClose} 
+            <ConfiguredNodePanel
+              width={panelWidth}
+              onClose={handlePanelClose}
             />
           </div>
         )}

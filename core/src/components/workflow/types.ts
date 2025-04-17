@@ -7,8 +7,6 @@ import { DatasetNode } from './nodes/Dataset/types';
 import { ModelNode } from './nodes/Model/types';
 import { TrainNode } from './nodes/Train/types';
 import { StartNode } from './nodes/start/types';
-import { AllHTMLAttributes } from 'react';
-import { IOType } from './io.types';
 
 export type ToolDefaultValue = {
   provider_id: string;

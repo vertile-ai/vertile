@@ -57,12 +57,6 @@ export const workflowService = {
           edges: true,
         },
       });
-      console.log(`Found workflow: ${workflow ? 'yes' : 'no'}`);
-      if (workflow) {
-        console.log(
-          `Nodes count: ${workflow.nodes.length}, Edges count: ${workflow.edges.length}`
-        );
-      }
       return workflow;
     } catch (error) {
       console.error(`Error in getWorkflowById:`, error);

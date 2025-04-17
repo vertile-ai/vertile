@@ -34,6 +34,7 @@ import { useSelectionInteractions } from './hooks/use-selection-interactions';
 import { NodeSelector } from './NodeSelector.component';
 import { v4 } from 'uuid';
 import { WorkflowClient } from '@/app/lib/common/workflow.types';
+import { detectCycle } from '@/app/lib/graph';
 
 // Define nodeTypes and edgeTypes outside the component to prevent recreating on every render
 const nodeTypes: Record<'custom', React.FC> = {
@@ -341,7 +342,7 @@ const Workflow: FC<WorkflowProps> = memo(({ viewport, initialData }) => {
   });
 
   useOnViewportChange({
-    onEnd: () => {},
+    onEnd: () => { },
   });
 
   useKeyPress('delete', handleEdgeDelete);
@@ -436,6 +437,8 @@ const Workflow: FC<WorkflowProps> = memo(({ viewport, initialData }) => {
       isValidConnection,
     ]
   );
+
+  console.log('cycle', detectCycle(nodes, edges));
 
   return (
     <div

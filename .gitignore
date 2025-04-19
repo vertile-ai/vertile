@@ -169,3 +169,5 @@ node_modules/
 activate/
 .next/
 .vscode/
+
+uploads/

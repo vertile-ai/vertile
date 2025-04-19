@@ -4,7 +4,6 @@ import React, {
   useEffect,
   useRef,
   useState,
-  createContext,
   useCallback,
   memo,
   useMemo,
@@ -12,15 +11,16 @@ import React, {
 import { useParams } from 'next/navigation';
 import useSWR from 'swr';
 import { ReactFlowProvider } from 'reactflow';
-import ConfiguredNodePanel from '@/src/components/workflow/NodePanelWrapper';
+import ConfiguredNodePanel from './_components/node-panel';
 import { useWorkflow } from '@/src/components/workflow/hooks/workflow.hooks';
 import { formatDistanceToNow } from 'date-fns';
 import dynamic from 'next/dynamic';
-import { WorkflowContextProvider } from '@/src/components/workflow/context';
+import { WorkflowContextProvider, useSelectedNode } from './context';
 import { useStore } from '@/src/components/workflow/store';
 import SaveStatusIcon from '@/app/components/workflow/SaveStatusIcon';
 import LoadingWorkflow from '@/app/components/workflow/LoadingWorkflow';
 import WorkflowError from '@/app/components/workflow/WorkflowError';
+import './page.css';
 
 // Dynamically import the workflow container to avoid SSR issues
 const WorkflowContainer = dynamic(() => import('@/src/components/workflow'), {
@@ -57,6 +57,9 @@ const WorkflowPage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Access the selected node from the centralized context
+  const { selectedNode, setSelectedNode } = useSelectedNode();
+
   // Optimize store selectors to only select what's needed
   const saveStatus = useStore((state) => state.saveStatus);
   const lastSaved = useStore((state) => state.lastSaved);
@@ -81,11 +84,39 @@ const WorkflowPage = () => {
     return () => clearInterval(intervalId);
   }, [lastSaved]);
 
-  // State to track the selected node
-  const [selectedNode, setSelectedNode] = useState(null);
-
   // State to track if the panel is open
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+  // Listen for node selection events from the workflow component
+  useEffect(() => {
+    const handleNodeSelected = (event: CustomEvent) => {
+      setSelectedNode(event.detail);
+    };
+
+    const handleNodeClearSelection = () => {
+      setSelectedNode(null);
+      setIsPanelOpen(false);
+    };
+
+    // Add custom event listeners
+    document.addEventListener(
+      'nodeSelected',
+      handleNodeSelected as EventListener
+    );
+    document.addEventListener('nodeClearSelection', handleNodeClearSelection);
+
+    // Clean up on unmount
+    return () => {
+      document.removeEventListener(
+        'nodeSelected',
+        handleNodeSelected as EventListener
+      );
+      document.removeEventListener(
+        'nodeClearSelection',
+        handleNodeClearSelection
+      );
+    };
+  }, [setSelectedNode]);
 
   const {
     data: workflowData,
@@ -99,7 +130,7 @@ const WorkflowPage = () => {
     if (workflowData) {
       setWorkflowId(workflowId);
     }
-  }, [workflowData, setWorkflowId]);
+  }, [workflowData, setWorkflowId, workflowId]);
 
   // Calculate panel width
   const panelWidth = 320;
@@ -107,6 +138,7 @@ const WorkflowPage = () => {
   // Handle panel close
   const handlePanelClose = () => {
     setIsPanelOpen(false);
+    setSelectedNode(null); // Also clear the selected node when panel is closed
   };
 
   // Handle click away from panel
@@ -120,7 +152,7 @@ const WorkflowPage = () => {
         handlePanelClose();
       }
     },
-    [isPanelOpen]
+    [isPanelOpen, setSelectedNode]
   );
 
   // Set up click away listener
@@ -154,58 +186,30 @@ const WorkflowPage = () => {
   }
 
   return (
-    <div className="relative w-full h-full bg-gray-50">
-      <div className="absolute top-4 left-4 z-20 bg-white rounded-lg shadow-sm px-4 py-2 flex items-center gap-2 text-sm">
-        <SaveStatusIcon saveStatus={saveStatus} />
-        <SaveMessage
-          saveStatus={saveStatus}
-          formattedLastSavedTime={formattedLastSavedTime}
-        />
-      </div>
+    <ReactFlowProvider>
+      <div className="workflow-container">
+        <div className="status-indicator">
+          <SaveStatusIcon saveStatus={saveStatus} />
+          <SaveMessage
+            saveStatus={saveStatus}
+            formattedLastSavedTime={formattedLastSavedTime}
+          />
+        </div>
 
-      <ReactFlowProvider>
         {workflowData && (
           <WorkflowContainer
             workflowId={workflowId}
             initialData={workflowData}
           />
         )}
-      </ReactFlowProvider>
 
-      {isPanelOpen && (
-        <div
-          ref={panelRef}
-          className="absolute right-4 top-4 bottom-4 transition-all duration-300 ease-in-out z-10"
-          style={{
-            width: `${panelWidth}px`,
-            animation: 'slide-in 0.3s ease-out forwards',
-          }}
-        >
-          <ConfiguredNodePanel width={panelWidth} onClose={handlePanelClose} />
-        </div>
-      )}
-      <style jsx>{`
-        @keyframes slide-in {
-          0% {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          100% {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        @keyframes pulse {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-      `}</style>
-    </div>
+        {isPanelOpen && (
+          <div ref={panelRef} className="config-panel panel-slide-in w-[700px]">
+            <ConfiguredNodePanel onClose={handlePanelClose} />
+          </div>
+        )}
+      </div>
+    </ReactFlowProvider>
   );
 };
 

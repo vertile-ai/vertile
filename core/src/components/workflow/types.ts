@@ -3,10 +3,10 @@ import type {
   Node as ReactFlowNode,
   Viewport,
 } from 'reactflow';
-import { DatasetNode } from './nodes/Dataset/types';
 import { ModelNode } from './nodes/Model/types';
 import { TrainNode } from './nodes/Train/types';
 import { StartNode } from './nodes/start/types';
+import { DatasetNode } from '@/app/workflows/[id]/_components/nodes/Dataset/types';
 
 export type ToolDefaultValue = {
   provider_id: string;
@@ -16,14 +16,6 @@ export type ToolDefaultValue = {
   tool_label: string;
   title: string;
 };
-
-export enum CollectionType {
-  all = 'all',
-  builtIn = 'builtin',
-  custom = 'api',
-  model = 'model',
-  workflow = 'workflow',
-}
 
 export type NodeTracing = {
   id: string;
@@ -59,48 +51,6 @@ export type NodeTracing = {
   details?: NodeTracing[][]; // iteration detail
 };
 
-export type Collection = {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  labels: string[];
-};
-
-export type ToolParameter = {
-  name: string;
-  label: string;
-  human_description: string;
-  type: string;
-  form: string;
-  llm_description: string;
-  required: boolean;
-  default: string;
-  options?: {
-    label: string;
-    value: string;
-  }[];
-  min?: number;
-  max?: number;
-};
-
-export type ToolVarInputs = Record<
-  string,
-  {
-    type: VarType;
-    value?: string | ValueSelector;
-  }
->;
-
-export type ToolNodeType = CommonNodeType & {
-  provider_id: string;
-  provider_type: CollectionType;
-  provider_name: string;
-  tool_name: string;
-  tool_label: string;
-  tool_parameters: ToolVarInputs;
-  tool_configurations: Record<string, any>;
-};
 export type NodesExtraData = {
   about: string;
   availablePrevNodes: BlockEnum[];
@@ -108,14 +58,6 @@ export type NodesExtraData = {
   getAvailablePrevNodes: () => BlockEnum[];
   getAvailableNextNodes: () => BlockEnum[];
   checkValid: any;
-};
-
-export type Tool = {
-  name: string;
-  label: string;
-  description: any;
-  parameters: ToolParameter[];
-  labels: string[];
 };
 
 export enum TransferMethod {
@@ -184,25 +126,6 @@ export interface NodePanelProps<T extends AllNodeTypes = AllNodeTypes> {
 }
 export type Edge = ReactFlowEdge<CommonEdgeType>;
 
-export interface GraphEdge {
-  id: string;
-  inDegree: string;
-  outDegree: string;
-}
-
-export interface WorkflowGraphRecord {
-  id: string;
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  viewport: Viewport;
-}
-
-export interface WorkflowDataUpdator {
-  nodes: Node[];
-  edges: Edge[];
-  viewport: Viewport;
-}
-
 export type ValueSelector = string[]; // [nodeId, key | obj key path]
 export enum VarType {
   variable = 'variable',
@@ -224,11 +147,6 @@ export interface Variable {
   options?: string[];
   required?: boolean;
   isParagraph?: boolean;
-}
-
-export interface VariableWithValue {
-  key: string;
-  value: string;
 }
 
 export enum InputVarType {
@@ -265,44 +183,6 @@ export type ModelConfig = {
   name: string;
   mode: string;
   completion_params: Record<string, any>;
-};
-
-export enum PromptRole {
-  system = 'system',
-  user = 'user',
-  assistant = 'assistant',
-}
-
-export enum EditionType {
-  basic = 'basic',
-  jinja2 = 'jinja2',
-}
-
-export type PromptItem = {
-  id?: string;
-  role?: PromptRole;
-  text: string;
-  edition_type?: EditionType;
-  jinja2_text?: string;
-};
-
-export enum MemoryRole {
-  user = 'user',
-  assistant = 'assistant',
-}
-
-export type RolePrefix = {
-  user: string;
-  assistant: string;
-};
-
-export type Memory = {
-  role_prefix?: RolePrefix;
-  window: {
-    enabled: boolean;
-    size: number | string | null;
-  };
-  query_prompt_template: string;
 };
 
 export enum VarType {
@@ -389,49 +269,6 @@ export type OnNodeAdd = (
   }
 ) => void;
 
-export type CheckValidRes = {
-  isValid: boolean;
-  errorMessage?: string;
-};
-
-export type RunFile = {
-  type: string;
-  transfer_method: TransferMethod[];
-  url?: string;
-  upload_file_id?: string;
-};
-
-export type WorkflowRunningData = {
-  task_id?: string;
-  message_id?: string;
-  conversation_id?: string;
-  result: {
-    sequence_number?: number;
-    workflow_id?: string;
-    inputs?: string;
-    process_data?: string;
-    outputs?: string;
-    status: string;
-    error?: string;
-    elapsed_time?: number;
-    total_tokens?: number;
-    created_at?: number;
-    created_by?: string;
-    finished_at?: number;
-    steps?: number;
-    showSteps?: boolean;
-    total_steps?: number;
-  };
-  tracing?: NodeTracing[];
-};
-
-export type HistoryWorkflowData = {
-  id: string;
-  sequence_number: number;
-  status: string;
-  conversation_id?: string;
-};
-
 export enum ChangeType {
   changeVarName = 'changeVarName',
   remove = 'remove',
@@ -443,8 +280,4 @@ export type MoreInfo = {
     beforeKey: string;
     afterKey?: string;
   };
-};
-
-export type ToolWithProvider = Collection & {
-  tools: Tool[];
 };

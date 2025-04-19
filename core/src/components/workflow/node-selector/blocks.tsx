@@ -15,9 +15,6 @@ const Blocks = ({
   onSelect,
   availableBlocksTypes = [],
 }: BlocksProps) => {
-  
-  const nodesExtraData = useNodesExtraData();
-
   return (
     <div className="p-1">
       {

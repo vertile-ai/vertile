@@ -342,7 +342,7 @@ const Workflow: FC<WorkflowProps> = memo(({ viewport, initialData }) => {
   });
 
   useOnViewportChange({
-    onEnd: () => { },
+    onEnd: () => {},
   });
 
   useKeyPress('delete', handleEdgeDelete);
@@ -438,8 +438,6 @@ const Workflow: FC<WorkflowProps> = memo(({ viewport, initialData }) => {
     ]
   );
 
-  console.log('cycle', detectCycle(nodes, edges));
-
   return (
     <div
       id="workflow-container"
@@ -486,13 +484,6 @@ const Workflow: FC<WorkflowProps> = memo(({ viewport, initialData }) => {
         }
       }}
     >
-      <button
-        onClick={handleRunAll}
-        className="absolute top-1 right-4 z-[100] bg-blue-500 text-white py-2 px-4 rounded-full shadow-lg hover:bg-blue-600 focus:outline-none"
-      >
-        Run All
-      </button>
-
       <div className="z-[100] absolute top-[36px] left-2">
         <NodeSelector />
       </div>

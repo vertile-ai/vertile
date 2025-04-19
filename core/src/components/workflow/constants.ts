@@ -5,10 +5,12 @@ import IfElseDefault from './nodes/if-else/default';
 import { ComponentType } from 'react';
 import StartNode from './nodes/start';
 import IfElseNode from './nodes/if-else';
-import DatasetNode, { DatasetDefault } from './nodes/Dataset';
 import ModelNode, { ModelDefault } from './nodes/Model';
 import TrainNode, { TrainDefault } from './nodes/Train';
 import PromptNode, { PromptDefault } from './nodes/Prompt';
+import DatasetNode, {
+  DatasetDefault,
+} from '@/app/workflows/[id]/_components/nodes/Dataset';
 import { IOType } from './io.types';
 
 export const NodeComponentMap: Record<string, ComponentType<any>> = {

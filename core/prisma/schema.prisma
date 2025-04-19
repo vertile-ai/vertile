@@ -48,3 +48,14 @@ model WorkflowEdge {
 
   @@unique(id)
 }
+
+model DatasetFile {
+  id          String   @id @default(uuid())
+  filename    String
+  contentType String
+  size        Int
+  path        String
+  uploadedAt  DateTime @default(now())
+
+  @@unique(id)
+}

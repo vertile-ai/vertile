@@ -1,6 +1,7 @@
+'use client';
 import React, { createContext, useContext, useRef } from 'react';
-import { createWorkflowStore } from './store';
-import { useStore } from './store';
+import { createWorkflowStore } from '@/src/components/workflow/store';
+import { useStore } from '@/src/components/workflow/store';
 
 type WorkflowStore = ReturnType<typeof createWorkflowStore>;
 

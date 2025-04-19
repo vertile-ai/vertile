@@ -3,7 +3,6 @@ import { useCallback, useContext, useMemo, useRef } from 'react';
 import { BlockEnum, WorkflowRunningStatus } from '../types';
 import {
   ITERATION_CHILDREN_Z_INDEX,
-  ITERATION_PADDING,
   NODE_WIDTH_X_OFFSET,
   NODES_EXTRA_DATA,
   NODES_INITIAL_DATA,
@@ -11,7 +10,7 @@ import {
   X_OFFSET,
   Y_OFFSET,
 } from '../constants';
-import { useStore } from '../store';
+import { setLocalStorageItem, useStore } from '../store';
 import {
   Connection,
   Edge,
@@ -23,17 +22,10 @@ import {
   OnConnect,
   OnConnectEnd,
   OnConnectStart,
-  ResizeParamsWithDirection,
   useReactFlow,
   useStoreApi,
 } from 'reactflow';
-import type {
-  CommonNodeType,
-  Node,
-  OnNodeAdd,
-  ToolDefaultValue,
-  ValueSelector,
-} from '../types';
+import type { Node, OnNodeAdd, ToolDefaultValue } from '../types';
 import { useNodeIterationInteractions } from './use-interactions';
 import {
   generateNewNode,
@@ -44,8 +36,6 @@ import {
 } from '../utils';
 import { uniqBy } from 'lodash-es';
 import { WorkflowContext } from '../context';
-import dayjs from 'dayjs';
-import { getLocalStorageItem, setLocalStorageItem } from '../store';
 
 export const useNodesExtraData = () => {
   return useMemo(
@@ -558,6 +548,16 @@ export const useNodesInteractions = () => {
         });
       });
       setEdges(newEdges);
+
+      // If cancelling selection, also clear the selected node in the context
+      if (cancelSelection) {
+        try {
+          const clearEvent = new CustomEvent('nodeClearSelection');
+          document.dispatchEvent(clearEvent);
+        } catch (error) {
+          console.error('Error clearing selected node:', error);
+        }
+      }
     },
     [store]
   );
@@ -567,16 +567,20 @@ export const useNodesInteractions = () => {
       handleNodeSelect(node.id);
 
       try {
-        const selectedNodeContext = (window as any).selectedNodeContext;
-        if (selectedNodeContext && selectedNodeContext.setSelectedNode) {
-          selectedNodeContext.setSelectedNode({
+        const contexts = document.querySelectorAll(
+          '[data-selected-node-context]'
+        );
+        const contextEvent = new CustomEvent('nodeSelected', {
+          detail: {
             id: node.id,
             type: node.data.type,
             title: node.data.title,
             desc: node.data.desc,
             data: node.data,
-          });
-        }
+          },
+        });
+
+        document.dispatchEvent(contextEvent);
       } catch (error) {
         console.error('Error updating shared context:', error);
       }
@@ -597,6 +601,12 @@ export const useNodesInteractions = () => {
       if (targetNode?.parentId !== sourceNode?.parentId) return;
 
       if (targetNode?.data.isIterationStart) return;
+
+      // if exist an edge with same source and target, return
+      const existingEdge = edges.find(
+        (edge) => edge.source === source && edge.target === target
+      );
+      if (existingEdge) return;
 
       const newEdge = {
         id: `${source}-${sourceHandle}-${target}-${targetHandle}`,

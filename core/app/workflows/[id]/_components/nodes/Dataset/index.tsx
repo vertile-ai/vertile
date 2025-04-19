@@ -1,78 +1,54 @@
 import type { FC } from 'react';
 import React from 'react';
 
-import {
-  NodeRunningStatus,
-  type CommonNodeType,
-  type NodeDefault,
-} from '@/src/components/workflow/types';
+import { type NodeDefault } from '@/src/components/workflow/types';
 
-import { ALL_COMPLETION_AVAILABLE_BLOCKS } from '../../constants';
-import {
-  SpinnerGap,
-  CheckCircle,
-  Warning,
-  Database,
-} from '@phosphor-icons/react';
-import { DatasetNode } from './types';
-import { IOType } from '../../io.types';
-
-export interface DatasetNodeType extends CommonNodeType {
-  datasetName: string;
-  description?: string;
-}
+import { Database, File, FilePlus } from '@phosphor-icons/react';
+import type { DatasetNodeType } from './types';
+import { IOType } from '../../../types';
+import { DatasetNodeInputTypes, DatasetNodeOutputTypes } from './constant';
 
 export const DatasetDefault: NodeDefault<DatasetNodeType> = {
   defaultValue: {
     description: 'Provides dataset for processing',
   },
   getAvailablePrevNodes() {
-    return [...ALL_COMPLETION_AVAILABLE_BLOCKS];
+    return [];
   },
   getAvailableNextNodes() {
-    const nodes = ALL_COMPLETION_AVAILABLE_BLOCKS;
-    return nodes;
+    return [];
   },
-  checkValid() {
+  checkValid(data) {
     return {
-      isValid: true,
+      isValid: !!data.fileId,
+      message: data.fileId ? '' : 'Please upload a dataset file',
     };
   },
 };
 
-const DatasetNodeImpl: FC<DatasetNode> = (data) => {
+const DatasetNodeImpl: FC<DatasetNodeType> = (data) => {
   // Define input/output types for the node
-  const inputs = [{ id: 'dataset-input', label: 'Query', ioType: IOType.text }];
+  const inputs = DatasetNodeInputTypes.map((type) => ({
+    id: `dataset-input-${type}`,
+    label: type,
+    ioType: type,
+  }));
 
-  const outputs = [{ id: 'dataset-output', label: 'Data', ioType: IOType.kv }];
+  const outputs = DatasetNodeOutputTypes.map((type) => ({
+    id: `dataset-output-${type}`,
+    label: type,
+    ioType: type,
+  }));
 
-  const nodeType = 'Dataset';
+  const nodeType = data.title || 'Dataset';
   const description = data.description || 'Provides dataset for processing';
 
   return (
     <div className="flex flex-col space-y-0.5 mb-1 px-3 py-1 w-full text-neutral-900">
-      {data._runningStatus && (
-        <div
-          className={
-            'flex items-center px-3 pt-3 pb-2 rounded-t-2xl bg-[rgba(250,252,255,0.9)]'
-          }
-        >
-          {(data._runningStatus === NodeRunningStatus.Running ||
-            data._singleRunningStatus === NodeRunningStatus.Running) && (
-            <SpinnerGap className="w-3.5 h-3.5 text-primary-600 animate-spin" />
-          )}
-          {data._runningStatus === NodeRunningStatus.Succeeded && (
-            <CheckCircle className="w-3.5 h-3.5 text-[#12B76A]" />
-          )}
-          {data._runningStatus === NodeRunningStatus.Failed && (
-            <Warning className="w-3.5 h-3.5" color="#F04438" />
-          )}
-        </div>
-      )}
       <div className="h-3/4 px-3 py-2">
         {/* Pass structured data to BaseNode */}
         <div className="flex items-center mb-2">
-          <Database className="shrink-0" size={16} color={'black'} />
+          <FilePlus className="shrink-0" size={16} color={'black'} />
           <span className="font-medium ml-2">{nodeType}</span>
         </div>
 
@@ -114,9 +90,12 @@ const DatasetNodeImpl: FC<DatasetNode> = (data) => {
           </div>
         </div>
 
-        <div className="mt-3 text-xs font-medium text-gray-700">
-          {data.datasetName}
-        </div>
+        {data.fileId && data.fileName && (
+          <div className="mt-2 flex items-center text-xs text-gray-700">
+            <File size={14} className="mr-1" />
+            <span>{data.fileName}</span>
+          </div>
+        )}
       </div>
     </div>
   );

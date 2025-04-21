@@ -1,0 +1,3 @@
+[submodule "mac/slowllama/slowllama"]
+	path = mac/slowllama/llama2/slowllama
+	url = git@github.com:jazelly/slowllama.git

@@ -212,16 +212,7 @@ export const useWorkflow = () => {
     ({ source, target }: Connection) => {
       const { edges, getNodes } = store.getState();
       const nodes = getNodes();
-      const sourceNode: Node = nodes.find((node) => node.id === source)!;
       const targetNode: Node = nodes.find((node) => node.id === target)!;
-
-      if (sourceNode && targetNode) {
-        const sourceNodeAvailableNextNodes =
-          NodeOutputTypes[sourceNode.data.type];
-
-        const targetNodeAvailablePrevNodes =
-          NodeInputTypes[sourceNode.data.type];
-      }
 
       const hasCycle = (node: Node, visited = new Set()) => {
         if (visited.has(node.id)) return false;

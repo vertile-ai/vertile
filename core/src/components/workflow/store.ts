@@ -3,7 +3,6 @@ import { useStore as useZustandStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import { debounce } from 'lodash-es';
 import { WorkflowContext } from './context';
-import { Node } from './types';
 
 // Helper function to safely access localStorage
 export const getLocalStorageItem = (key: string, defaultValue: any) => {
@@ -21,15 +20,95 @@ export const setLocalStorageItem = (key: string, value: string) => {
   }
 };
 
+// Add the nodeExecutionStatuses to the store
+interface WorkflowState {
+  selectedNode: string | undefined;
+  setSelectedNode: (selectedNode: string | undefined) => void;
+  lastSaved: number;
+  setLastSaved: (lastSaved: number) => void;
+  saveStatus: string;
+  setSaveStatus: (saveStatus: string) => void;
+  workflowId: string;
+  setWorkflowId: (workflowId: string) => void;
+  panelWidth: number;
+  workflowRunningData: any | undefined;
+  setWorkflowRunningData: (workflowRunningData: any | undefined) => void;
+  historyWorkflowData: any | undefined;
+  setHistoryWorkflowData: (historyWorkflowData: any | undefined) => void;
+  showRunHistory: boolean;
+  setShowRunHistory: (showRunHistory: boolean) => void;
+  workflowExecutionStatus: string;
+  setWorkflowExecutionStatus: (status: string) => void;
+  nodeExecutionStatuses: Record<string, string>;
+  setNodeExecutionStatuses: (statuses: Record<string, string>) => void;
+  updateNodeExecutionStatus: (nodeId: string, status: string) => void;
+  clearNodeExecutionStatuses: () => void;
+  publishedAt: number;
+  setPublishedAt: (publishedAt: number) => void;
+  showInputsPanel: boolean;
+  setShowInputsPanel: (showInputsPanel: boolean) => void;
+  inputs: Record<string, any>;
+  setInputs: (inputs: Record<string, any>) => void;
+  backupDraft: any | undefined;
+  notInitialWorkflow: boolean;
+  setNotInitialWorkflow: (notInitialWorkflow: boolean) => void;
+  nodesDefaultConfigs: Record<string, any>;
+  setNodesDefaultConfigs: (nodesDefaultConfigs: Record<string, any>) => void;
+  nodeAnimation: boolean;
+  setNodeAnimation: (nodeAnimation: boolean) => void;
+  isRestoring: boolean;
+  setIsRestoring: (isRestoring: boolean) => void;
+  debouncedUpdateWorkflow: (updateWorkflow: () => void) => void;
+  clipboardElements: any[];
+  setClipboardElements: (clipboardElements: any[]) => void;
+  shortcutsDisabled: boolean;
+  setShortcutsDisabled: (shortcutsDisabled: boolean) => void;
+  selection: any | null;
+  setSelection: (selection: any | null) => void;
+  bundleNodeSize: any | null;
+  setBundleNodeSize: (bundleNodeSize: any | null) => void;
+  controlMode: string;
+  setControlMode: (controlMode: string) => void;
+  panelMenu: any | undefined;
+  setPanelMenu: (panelMenu: any | undefined) => void;
+  nodeMenu: any | undefined;
+  setNodeMenu: (nodeMenu: any | undefined) => void;
+  mousePosition: {
+    pageX: number;
+    pageY: number;
+    elementX: number;
+    elementY: number;
+  };
+  setMousePosition: (mousePosition: {
+    pageX: number;
+    pageY: number;
+    elementX: number;
+    elementY: number;
+  }) => void;
+  showConfirm: any | undefined;
+  setShowConfirm: (showConfirm: any | undefined) => void;
+  showAssignVariablePopup: any | undefined;
+  setShowAssignVariablePopup: (
+    showAssignVariablePopup: any | undefined
+  ) => void;
+  hoveringAssignVariableGroupId: any | undefined;
+  setHoveringAssignVariableGroupId: (
+    hoveringAssignVariableGroupId: any | undefined
+  ) => void;
+  connectingNodePayload: any | undefined;
+  setConnectingNodePayload: (connectingNodePayload: any | undefined) => void;
+  enteringNodePayload: any | undefined;
+  setEnteringNodePayload: (enteringNodePayload: any | undefined) => void;
+}
+
 export const createWorkflowStore = () => {
-  return createStore<Record<string, any>>((set) => ({
+  return createStore<WorkflowState>((set) => ({
     selectedNode: undefined,
     setSelectedNode: (selectedNode) => set({ selectedNode }),
     lastSaved: 0,
     setLastSaved: (lastSaved) => set({ lastSaved }),
     saveStatus: 'idle',
     setSaveStatus: (saveStatus) => set({ saveStatus }),
-
 
     workflowId: '',
     setWorkflowId: (workflowId) => set({ workflowId }),
@@ -44,6 +123,23 @@ export const createWorkflowStore = () => {
       set(() => ({ historyWorkflowData })),
     showRunHistory: false,
     setShowRunHistory: (showRunHistory) => set(() => ({ showRunHistory })),
+
+    // Workflow execution state
+    workflowExecutionStatus: 'idle',
+    setWorkflowExecutionStatus: (status) =>
+      set(() => ({ workflowExecutionStatus: status })),
+    nodeExecutionStatuses: {},
+    setNodeExecutionStatuses: (statuses: Record<string, string>) =>
+      set(() => ({ nodeExecutionStatuses: statuses })),
+    updateNodeExecutionStatus: (nodeId, status) =>
+      set((state) => ({
+        nodeExecutionStatuses: {
+          ...state.nodeExecutionStatuses,
+          [nodeId]: status,
+        },
+      })),
+    clearNodeExecutionStatuses: () =>
+      set(() => ({ nodeExecutionStatuses: {} })),
 
     publishedAt: 0,
     setPublishedAt: (publishedAt) =>
@@ -109,7 +205,9 @@ export const createWorkflowStore = () => {
   }));
 };
 
-export function useStore<T>(selector: (state) => T): T {
+export function useStore<T = WorkflowState>(
+  selector: (state: WorkflowState) => T
+): T {
   const store = useContext(WorkflowContext);
   if (!store) throw new Error('Missing WorkflowContext.Provider in the tree');
 

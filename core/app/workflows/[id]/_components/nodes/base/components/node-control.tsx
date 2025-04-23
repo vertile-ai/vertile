@@ -1,40 +1,57 @@
-import type { FC } from 'react';
-import { memo, useCallback, useState } from 'react';
+import React, { FC } from 'react';
+import {
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon,
+} from '@heroicons/react/24/solid';
+import { NodeRunningStatus } from '@/app/workflows/[id]/types';
 
-import PanelOperator from './panel-operator';
-import React from 'react';
-import { Node } from '../../types';
+interface NodeControlProps {
+  id: string;
+  data: any;
+}
 
-type NodeControlProps = Pick<Node, 'id' | 'data'>;
 const NodeControl: FC<NodeControlProps> = ({ id, data }) => {
-  const [open, setOpen] = useState(false);
+  // Node is not running if no status is set
+  if (!data._runningStatus) return null;
 
-  const handleOpenChange = useCallback((newOpen: boolean) => {
-    setOpen(newOpen);
-  }, []);
+  // Render different icons based on running status
+  switch (data._runningStatus) {
+    case NodeRunningStatus.Running:
+      return (
+        <div className="absolute top-1 right-1">
+          <div className="animate-spin">
+            <ClockIcon className="h-5 w-5 text-blue-500" />
+          </div>
+        </div>
+      );
 
-  return (
-    <div
-      className={`
-      hidden group-hover:flex pb-1 absolute right-0 -top-7 h-7
-      ${data.selected && '!flex'}
-      ${open && '!flex'}
-      `}
-    >
-      <div
-        className="flex items-center px-0.5 h-6 bg-white rounded-lg border-[0.5px] border-gray-200 shadow-xs text-gray-600"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <PanelOperator
-          id={id}
-          data={data}
-          offset={0}
-          onOpenChange={handleOpenChange}
-          triggerClassName="!w-5 !h-5"
-        />
-      </div>
-    </div>
-  );
+    case NodeRunningStatus.Succeeded:
+      return (
+        <div className="absolute top-1 right-1">
+          <CheckCircleIcon className="h-5 w-5 text-green-500" />
+        </div>
+      );
+
+    case NodeRunningStatus.Failed:
+      return (
+        <div className="absolute top-1 right-1">
+          <XCircleIcon className="h-5 w-5 text-red-500" />
+        </div>
+      );
+
+    case NodeRunningStatus.Waiting:
+      return (
+        <div className="absolute top-1 right-1">
+          <div className="animate-pulse">
+            <ClockIcon className="h-5 w-5 text-yellow-500" />
+          </div>
+        </div>
+      );
+
+    default:
+      return null;
+  }
 };
 
-export default memo(NodeControl);
+export default NodeControl;

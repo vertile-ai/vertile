@@ -1,10 +1,6 @@
 import os
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
-
-# Load environment variables from .env file if it exists
-load_dotenv()
-
 
 class Settings(BaseSettings):
     """Application settings."""
@@ -22,7 +18,7 @@ class Settings(BaseSettings):
 
     class Config:
         case_sensitive = True
-        env_file = ".env"
+        env_file = ".env.development"
 
 
 settings = Settings()

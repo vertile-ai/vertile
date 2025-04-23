@@ -29,6 +29,7 @@ import { generateNewNode, getKeyboardKeyCodeBySystem } from './utils';
 import { useEdgesInteractions } from './hooks/use-edges-interactions';
 import { useSelectionInteractions } from './hooks/use-selection-interactions';
 import { WorkflowClient } from '@/app/lib/common/workflow.types';
+import { useNodeExecution } from './hooks/use-node-execution';
 import {
   ITERATION_CHILDREN_Z_INDEX,
   NODES_INITIAL_DATA,
@@ -95,6 +96,9 @@ const Workflow: FC<WorkflowProps> = memo(({ initialData }) => {
 
   const { handlePaneContextMenu } = usePanelInteractions();
   const { isValidConnection, handleLayout } = useWorkflow();
+
+  // Hook to update node visuals based on execution status
+  useNodeExecution();
 
   // Memoized handler to save data
   const saveWorkflowInternalToBackend = useCallback(() => {

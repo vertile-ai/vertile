@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
+import './style.css';
 import { useParams } from 'next/navigation';
 import useSWR from 'swr';
 import { ReactFlowProvider } from 'reactflow';
@@ -12,10 +13,10 @@ import { useStore } from '@/src/components/workflow/store';
 import SaveStatusIcon from '@/app/components/workflow/SaveStatusIcon';
 import LoadingWorkflow from '@/app/components/workflow/LoadingWorkflow';
 import WorkflowError from '@/app/components/workflow/WorkflowError';
-import './page.css';
 import { NodeSelector } from './_components/node-selector';
 import Operator from './_components/operator';
 import { useWorkflow } from './hooks';
+import RunWorkflowButton from '@/app/components/workflow/RunWorkflowButton';
 
 // Dynamically import the workflow container to avoid SSR issues
 const WorkflowInternal = dynamic(() => import('@/src/components/workflow'), {
@@ -185,6 +186,7 @@ const WorkflowPage = () => {
             saveStatus={saveStatus}
             formattedLastSavedTime={formattedLastSavedTime}
           />
+          <RunWorkflowButton workflowId={workflowId} />
         </div>
 
         {workflowData && (

@@ -3,6 +3,7 @@ import { cloneElement, memo, useMemo, useRef } from 'react';
 import cn from 'classnames';
 import { NodeSourceHandle, NodeTargetHandle } from './components/node-handle';
 import NodeControl from './components/node-control';
+import NodeOptions from './components/node-options';
 import { NodeRunningStatus } from '@/app/workflows/[id]/types';
 
 const BaseNode: FC<any> = ({ id, data, children, className }) => {
@@ -58,7 +59,10 @@ const BaseNode: FC<any> = ({ id, data, children, className }) => {
           handleId="source"
         />
 
-        {!data._runningStatus && <NodeControl id={id} data={data} />}
+        {!data._runningStatus && <NodeOptions id={id} data={data} />}
+
+        <NodeControl id={id} data={data} />
+
         {cloneElement(children, { id, data })}
       </div>
     </div>

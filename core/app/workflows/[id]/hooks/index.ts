@@ -152,3 +152,6 @@ export function useAutoSaveWorkflow(workflowId: string) {
     saveWorkflow,
   };
 }
+
+// Add export for the useWorkflowExecution hook
+export * from './use-workflow-execution';

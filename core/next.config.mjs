@@ -17,7 +17,12 @@ const nextConfig = {
   },
   // Configure rewrites if needed
   async rewrites() {
-    return [];
+    return [
+      {
+        source: '/workflow',
+        destination: '/workflows/new',
+      },
+    ];
   },
   // Enable standalone output for Docker
   output: 'standalone',

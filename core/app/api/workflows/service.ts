@@ -15,6 +15,7 @@ export const workflowService = {
   ): Promise<WorkflowWithRelations> {
     return prisma.workflow.create({
       data: {
+        id: data.id || v4(),
         name: data.name,
         description: data.description,
         zoom: data.zoom || 1,
@@ -77,12 +78,12 @@ export const workflowService = {
   ): Promise<WorkflowWithRelations> {
     // Start a transaction to ensure data consistency
     return prisma.$transaction(async (tx) => {
+      console.log('Updating workflow:', data);
       // Update workflow basic info
-      const workflow = await tx.workflow.update({
+      await tx.workflow.update({
         where: { id },
         data: {
           name: data.name,
-          description: data.description,
           zoom: data.zoom,
         },
       });

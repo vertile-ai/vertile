@@ -1,5 +1,5 @@
 import React, { type FC, type ReactElement } from 'react';
-import { cloneElement, memo, useMemo, useRef } from 'react';
+import { cloneElement, memo, useMemo, useRef, useCallback } from 'react';
 import cn from 'classnames';
 import { NodeSourceHandle, NodeTargetHandle } from './components/node-handle';
 import NodeControl from './components/node-control';
@@ -25,6 +25,14 @@ const BaseNode: FC<any> = ({ id, data, children, className }) => {
       };
     }, [data._runningStatus, showSelectedBorder]);
 
+  const handleDoubleClick = useCallback(() => {
+    // Dispatch a custom event for node double click
+    const doubleClickEvent = new CustomEvent('nodeDoubleClick', {
+      detail: { nodeId: id },
+    });
+    document.dispatchEvent(doubleClickEvent);
+  }, [id]);
+
   return (
     <div
       className={cn(
@@ -33,6 +41,7 @@ const BaseNode: FC<any> = ({ id, data, children, className }) => {
         className
       )}
       ref={nodeRef}
+      onDoubleClick={handleDoubleClick}
     >
       <div
         className={cn(

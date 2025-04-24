@@ -1,7 +1,7 @@
 import React from 'react';
 import { memo } from 'react';
 import type { NodeProps } from 'reactflow';
-import { NodeComponentMap } from '../../const';
+import { NodeComponentMap } from '../workflow-main/const';
 import BaseNode from './base';
 
 const CustomNode = (props: NodeProps) => {

@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import { DatasetNodePanelProps, FileInfo } from './types';
 import { FileUpload } from './upload';
 import { FileSelector } from './upload/FileSelector';
 import { Upload, List, Clock, FilePdf } from '@phosphor-icons/react';
+import { useStore } from '../../workflow-main/store';
 
 type TabType = 'upload' | 'select';
 
 export const DatasetPanel: React.FC<DatasetNodePanelProps> = (data) => {
-  const params = useParams<{ id: string }>();
-  const workflowId = params.id;
+  const workflowId = useStore((state) => state.workflowId);
   const [activeTab, setActiveTab] = useState<TabType>(
     data.fileId ? 'select' : 'upload'
   );

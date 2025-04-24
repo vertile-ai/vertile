@@ -2,12 +2,12 @@ import { PlusCircle } from '@phosphor-icons/react';
 import React, { useEffect, useRef, useState } from 'react';
 
 export const AnimatedDropdown = ({
-  size = 24,
   color = 'black',
+  className,
   children,
 }: {
-  size?: number;
   color?: string;
+  className?: string;
   children: any;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,14 +27,13 @@ export const AnimatedDropdown = ({
   };
 
   return (
-    <div className="relative inline-block">
+    <div className={`relative inline-block w-full h-full`}>
       <div ref={iconRef} className="flex items-center cursor-pointer">
         <PlusCircle
-          size={size}
           color={color}
           weight="fill"
           onClick={toggleDropdown}
-          className={`transition-transform duration-300`}
+          className={`transition-transform duration-300 w-full h-full`}
           style={{ transform: isOpen ? 'rotate(225deg)' : '' }}
         />
       </div>

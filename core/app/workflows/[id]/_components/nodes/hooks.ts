@@ -2,7 +2,7 @@ import { useStoreApi } from 'reactflow';
 import { CommonNodeType } from '@/app/workflows/[id]/_components/nodes/types';
 import { useCallback } from 'react';
 import produce from 'immer';
-import { useNodesReadOnly } from '@/src/components/workflow/hooks/hooks';
+import { useNodesReadOnly } from '@/app/workflows/[id]/_components/workflow-internal/hooks/hooks';
 
 import type {
   BlockEnum,
@@ -11,8 +11,8 @@ import type {
 import {
   ITERATION_PADDING,
   NODES_INITIAL_DATA,
-} from '@/app/workflows/[id]/const';
-import { generateNewNode } from '@/src/components/workflow/utils';
+} from '@/app/workflows/[id]/_components/workflow-main/const';
+import { generateNewNode } from '@/app/workflows/[id]/_components/workflow-internal/utils';
 
 export const useNodeIterationInteractions = () => {
   const store = useStoreApi();
@@ -206,23 +206,5 @@ export const useNodeDataUpdate = () => {
   return {
     handleNodeDataUpdate,
     handleNodeDataUpdateWithSyncDraft,
-  };
-};
-export const useNodeCrud = <NodeType extends CommonNodeType = CommonNodeType>(
-  id: string,
-  data: NodeType
-) => {
-  const { handleNodeDataUpdateWithSyncDraft } = useNodeDataUpdate();
-
-  const setInputs = (newInputs: NodeType) => {
-    handleNodeDataUpdateWithSyncDraft({
-      id,
-      data: newInputs,
-    });
-  };
-
-  return {
-    inputs: data,
-    setInputs,
   };
 };

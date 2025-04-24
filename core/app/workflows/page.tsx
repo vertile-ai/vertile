@@ -14,29 +14,30 @@ import {
 } from '@phosphor-icons/react';
 
 import { useWorkflows } from './hook';
+import useSWR, { mutate } from 'swr';
 export default function WorkflowsPage() {
   const router = useRouter();
-  const { loading, error, fetchWorkflows, deleteWorkflow } = useWorkflows();
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const { deleteWorkflow } = useWorkflows();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadWorkflows();
-  }, []);
-
-  const loadWorkflows = async () => {
-    const data = await fetchWorkflows();
-    setWorkflows(data);
-  };
+  const {
+    data: workflows,
+    isLoading: isLoadingWorkflows,
+    error: errorWorkflows,
+  } = useSWR('/api/workflows', async () => {
+    const response = await fetch('/api/workflows');
+    if (!response.ok) {
+      throw new Error('Failed to fetch workflows');
+    }
+    return await response.json();
+  });
 
   const handleDelete = async (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
     if (confirm('Are you sure you want to delete this workflow?')) {
       setIsDeleting(id);
-      const success = await deleteWorkflow(id);
-      if (success) {
-        setWorkflows((prev) => prev.filter((workflow) => workflow.id !== id));
-      }
+      await deleteWorkflow(id);
+      mutate('/api/workflows');
       setIsDeleting(null);
     }
   };
@@ -59,6 +60,14 @@ export default function WorkflowsPage() {
     downloadAnchorNode.remove();
   };
 
+  if (isLoadingWorkflows) {
+    return <div>Loading...</div>;
+  }
+
+  if (errorWorkflows) {
+    return <div>Error: {errorWorkflows}</div>;
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 bg-slate-50">
       <div className="flex justify-between items-center mb-8">
@@ -72,23 +81,7 @@ export default function WorkflowsPage() {
         </button>
       </div>
 
-      {loading && (
-        <div className="flex justify-center my-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-
-      {error && (
-        <div
-          className="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 mb-8"
-          role="alert"
-        >
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
-        </div>
-      )}
-
-      {!loading && workflows.length === 0 && (
+      {workflows.length === 0 && (
         <div className="text-center py-16 bg-white rounded-lg shadow-sm">
           <div className="mx-auto w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-4">
             <Circuitry size={48} color="#3B82F6" weight="duotone" />

@@ -10,15 +10,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model WorkflowExecution {
+  id         String   @id @default(uuid())
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  snapshot   Json // The snapshot of the workflow at the time of execution
+  status     String
+  result     Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 model Workflow {
-  id          String         @id @default(uuid())
-  name        String
-  description String?
-  zoom        Float          @default(1)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  nodes       WorkflowNode[]
-  edges       WorkflowEdge[]
+  id         String              @id @default(uuid())
+  name       String
+  zoom       Float               @default(1)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  nodes      WorkflowNode[]
+  edges      WorkflowEdge[]
+  executions WorkflowExecution[]
 
   @@unique(id)
 }

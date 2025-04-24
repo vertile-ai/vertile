@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef } from 'react';
-import { useParams } from 'next/navigation';
 import { Upload, FilePlus, X, Check } from '@phosphor-icons/react';
+import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
 
 interface FileUploadProps {
   onUploadComplete: (
@@ -38,8 +38,7 @@ const initialUploadState: UploadState = {
 };
 
 export const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
-  const params = useParams<{ id: string }>();
-  const workflowId = params.id;
+  const workflowId = useStore((state) => state.workflowId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadState, setUploadState] =

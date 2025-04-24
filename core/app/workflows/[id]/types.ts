@@ -1,10 +1,3 @@
-import type { Workflow, WorkflowEdge, WorkflowNode } from '@prisma/client';
-
-export type WorkflowWithRelations = Workflow & {
-  nodes: WorkflowNode[];
-  edges: WorkflowEdge[];
-};
-
 import type { Edge as ReactFlowEdge, Node as ReactFlowNode } from 'reactflow';
 
 import {

@@ -171,3 +171,6 @@ activate/
 .vscode/
 
 uploads/
+
+results/
+**/results/

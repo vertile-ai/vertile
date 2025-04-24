@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import { Clock, FileText } from '@phosphor-icons/react';
-
+import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
 interface DatasetFile {
   id: string;
   filename: string;
@@ -22,8 +21,7 @@ interface FileSelectorProps {
 }
 
 export const FileSelector: React.FC<FileSelectorProps> = ({ onFileSelect }) => {
-  const params = useParams<{ id: string }>();
-  const workflowId = params.id;
+  const workflowId = useStore((state) => state.workflowId);
   const [files, setFiles] = useState<DatasetFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,3 +1,4 @@
+import React from 'react';
 import type { FC } from 'react';
 import { Fragment, memo, useCallback, useState } from 'react';
 import cn from 'classnames';
@@ -6,11 +7,9 @@ import { useKeyPress } from 'ahooks';
 import { useReactFlow, useViewport } from 'reactflow';
 import {
   getKeyboardKeyCodeBySystem,
-  getKeyboardKeyNameBySystem,
   isEventTargetInputArea,
-} from '../../../../../src/components/workflow/utils';
+} from '@/app/workflows/[id]/_components/workflow-internal/utils';
 import TipPopup from './tip-popup';
-import React from 'react';
 import {
   MagnifyingGlassMinus,
   MagnifyingGlassPlus,

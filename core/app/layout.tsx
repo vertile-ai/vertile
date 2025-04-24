@@ -5,8 +5,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -15,7 +15,10 @@ dayjs.extend(relativeTime);
 
 export const metadata: Metadata = {
   title: 'Vertile',
-  description: 'RAG Engine',
+  description: 'AI Workflow Engine',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -25,20 +28,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <script src="https://unpkg.com/react-scan/dist/auto.global.js" />
-      </head>
       <body className={inter.className}>
+        <Script src="https://unpkg.com/react-scan/dist/auto.global.js" />
         <div className="flex h-screen">
-          <div className="w-12 flex-shrink-0 flex flex-col items-center justify-between">
-            <Sidebar />
-          </div>
-          <div className="flex flex-col h-full w-full overflow-y-hidden">
-            <div className="h-12 flex-shrink-0">
-              <Header />
-            </div>
+          <Sidebar />
 
-            {/* Main content */}
+          <div className="flex flex-col h-full w-full overflow-y-hidden">
             <div className="flex-1 overflow-y-auto bg-slate-50">{children}</div>
           </div>
 

@@ -2,7 +2,6 @@
 import type { FC } from 'react';
 import React from 'react';
 import cn from 'classnames';
-import { varHighlightHTML } from '../../var-highlight';
 
 type Props = {
   isFocus?: boolean;
@@ -23,15 +22,6 @@ const SupportVarInput: FC<Props> = ({
   textClassName,
   readonly,
 }) => {
-  const withHightContent = (value || '')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(
-      /\{\{([^}]+)\}\}/g,
-      varHighlightHTML({ name: '$1', className: '!mb-0' })
-    ) // `<span class="${highLightClassName}">{{$1}}</span>`
-    .replace(/\n/g, '<br />');
-
   return (
     <div className={cn(wrapClassName, 'flex w-full h-full')} onClick={onFocus}>
       {isFocus && !readonly && children ? (
@@ -43,9 +33,6 @@ const SupportVarInput: FC<Props> = ({
             'w-0 grow h-full whitespace-nowrap truncate'
           )}
           title={value}
-          dangerouslySetInnerHTML={{
-            __html: withHightContent,
-          }}
         ></div>
       )}
     </div>

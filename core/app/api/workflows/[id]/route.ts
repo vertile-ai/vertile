@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { workflowService } from '../service';
-import { updateWorkflowSchema } from '../validation';
+import { createWorkflowSchema, updateWorkflowSchema } from '../validation';
 
 // GET /api/workflows/[id] - Get a workflow by ID
 export async function GET(
@@ -32,6 +32,31 @@ export async function GET(
         details: errorMessage,
         stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
       },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/workflows - Create a new workflow
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    // Validate request body
+    const result = createWorkflowSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation error', details: result.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const workflow = await workflowService.createWorkflow(result.data);
+    return NextResponse.json(workflow, { status: 201 });
+  } catch (error) {
+    console.error('Error creating workflow:', error);
+    return NextResponse.json(
+      { error: 'Failed to create workflow' },
       { status: 500 }
     );
   }

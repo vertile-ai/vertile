@@ -11,7 +11,11 @@ import { TooltipPlus } from '@/app/components/ui/TooltipPlus';
 import { AnimatedDropdown } from '@/src/components/reusable/AnimatedDropdown.component';
 import { BlockEnum } from '@/app/workflows/[id]/_components/nodes/types';
 import { useReactFlow } from 'reactflow';
-import { NODE_WIDTH } from '@/app/workflows/[id]/const';
+import {
+  EXECUTIONS_MODE,
+  NODE_WIDTH,
+} from '@/app/workflows/[id]/_components/workflow-main/const';
+import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
 
 // Simplified DraggableNode component that uses HTML5 drag and drop API
 const DraggableNode = ({ type, children, className }) => {
@@ -89,118 +93,128 @@ const DraggableNode = ({ type, children, className }) => {
 };
 
 export const NodeSelector = () => {
+  // Get the workflow mode from the store
+  const workflowMode = useStore((state) => state.workflowMode);
+
+  // Don't render the selector in pipeline mode
+  if (workflowMode === EXECUTIONS_MODE) {
+    return null;
+  }
+
   return (
-    <AnimatedDropdown size={30} color="#6B7280">
-      <div className="flex flex-col items-center pb-2 px-1 w-32 bg-white rounded-md text-gray-800 shadow-md border border-gray-200">
-        <TooltipPlus
-          position="right"
-          offset={4}
-          hideArrow
-          popupClassName="!p-0 !bg-white"
-          popupContent={
-            <div className="flex items-center gap-1 px-2 h-6 text-xs font-medium text-gray-700 rounded-lg border-[0.5px] border-gray-200">
-              Use the Dataset node to specify your input data
-            </div>
-          }
-        >
-          <DraggableNode
-            type={BlockEnum.Dataset}
-            className="mt-2 flex items-center justify-between w-full cursor-pointer hover:bg-gray-100 p-1 rounded-md"
+    <div className="w-12 h-12">
+      <AnimatedDropdown color="#6B7280">
+        <div className="flex flex-col items-center pb-2 px-1 w-32 bg-white rounded-md text-gray-800 shadow-md border border-gray-200">
+          <TooltipPlus
+            position="right"
+            offset={4}
+            hideArrow
+            popupClassName="!p-0 !bg-white"
+            popupContent={
+              <div className="flex items-center gap-1 px-2 h-6 text-xs font-medium text-gray-700 rounded-lg border-[0.5px] border-gray-200">
+                Use the Dataset node to specify your input data
+              </div>
+            }
           >
-            <div className="flex items-center">
-              <Database size={22} color="#9B7280" weight="fill" />
-              <span className="ml-1 text-sm">Dataset</span>
-            </div>
-            <Question size={18} color={'#6B7280'} />
-          </DraggableNode>
-        </TooltipPlus>
+            <DraggableNode
+              type={BlockEnum.Dataset}
+              className="mt-2 flex items-center justify-between w-full cursor-pointer hover:bg-gray-100 p-1 rounded-md"
+            >
+              <div className="flex items-center">
+                <Database size={22} color="#9B7280" weight="fill" />
+                <span className="ml-1 text-sm">Dataset</span>
+              </div>
+              <Question size={18} color={'#6B7280'} />
+            </DraggableNode>
+          </TooltipPlus>
 
-        <TooltipPlus
-          position="right"
-          offset={4}
-          hideArrow
-          popupClassName="!p-0 !bg-white"
-          popupContent={
-            <div className="flex items-center gap-1 px-2 h-6 text-xs font-medium text-gray-700 rounded-lg border-[0.5px] border-gray-200">
-              Use the Train node to specify a model training job
-            </div>
-          }
-        >
-          <DraggableNode
-            type={BlockEnum.Train}
-            className="mt-2 flex items-center justify-between w-full cursor-pointer hover:bg-gray-100 p-1 rounded-md"
+          <TooltipPlus
+            position="right"
+            offset={4}
+            hideArrow
+            popupClassName="!p-0 !bg-white"
+            popupContent={
+              <div className="flex items-center gap-1 px-2 h-6 text-xs font-medium text-gray-700 rounded-lg border-[0.5px] border-gray-200">
+                Use the Train node to specify a model training job
+              </div>
+            }
           >
-            <div className="flex items-center">
-              <MathOperations
-                size={22}
-                color="#6B7280"
-                weight="fill"
-                className="cursor-pointer"
-              />
-              <span className="ml-1 text-sm">Train</span>
-            </div>
-            <Question size={18} color={'#6B7280'} />
-          </DraggableNode>
-        </TooltipPlus>
+            <DraggableNode
+              type={BlockEnum.Train}
+              className="mt-2 flex items-center justify-between w-full cursor-pointer hover:bg-gray-100 p-1 rounded-md"
+            >
+              <div className="flex items-center">
+                <MathOperations
+                  size={22}
+                  color="#6B7280"
+                  weight="fill"
+                  className="cursor-pointer"
+                />
+                <span className="ml-1 text-sm">Train</span>
+              </div>
+              <Question size={18} color={'#6B7280'} />
+            </DraggableNode>
+          </TooltipPlus>
 
-        {/* Model Node */}
-        <TooltipPlus
-          position="right"
-          offset={4}
-          hideArrow
-          popupClassName="!p-0 !bg-white"
-          popupContent={
-            <div className="flex items-center gap-1 px-2 h-6 text-xs font-medium text-gray-700 rounded-lg border-[0.5px] border-gray-200">
-              Use the Model node to specify which model to use
-            </div>
-          }
-        >
-          <DraggableNode
-            type={BlockEnum.Model}
-            className="mt-2 flex items-center justify-between w-full cursor-pointer hover:bg-gray-100 p-1 rounded-md"
+          {/* Model Node */}
+          <TooltipPlus
+            position="right"
+            offset={4}
+            hideArrow
+            popupClassName="!p-0 !bg-white"
+            popupContent={
+              <div className="flex items-center gap-1 px-2 h-6 text-xs font-medium text-gray-700 rounded-lg border-[0.5px] border-gray-200">
+                Use the Model node to specify which model to use
+              </div>
+            }
           >
-            <div className="flex items-center">
-              <PlusCircle
-                size={22}
-                color="#6B7280"
-                weight="fill"
-                className="cursor-pointer"
-              />
-              <span className="ml-1 text-sm">Model</span>
-            </div>
-            <Question size={18} color={'#6B7280'} />
-          </DraggableNode>
-        </TooltipPlus>
+            <DraggableNode
+              type={BlockEnum.Model}
+              className="mt-2 flex items-center justify-between w-full cursor-pointer hover:bg-gray-100 p-1 rounded-md"
+            >
+              <div className="flex items-center">
+                <PlusCircle
+                  size={22}
+                  color="#6B7280"
+                  weight="fill"
+                  className="cursor-pointer"
+                />
+                <span className="ml-1 text-sm">Model</span>
+              </div>
+              <Question size={18} color={'#6B7280'} />
+            </DraggableNode>
+          </TooltipPlus>
 
-        {/* Prompt Node */}
-        <TooltipPlus
-          position="right"
-          offset={4}
-          hideArrow
-          popupClassName="!p-0 !bg-white"
-          popupContent={
-            <div className="flex items-center gap-1 px-2 h-6 text-xs font-medium text-gray-700 rounded-lg border-[0.5px] border-gray-200">
-              Use the Prompt node to create prompts for your model
-            </div>
-          }
-        >
-          <DraggableNode
-            type={BlockEnum.Prompt}
-            className="mt-2 flex items-center justify-between w-full cursor-pointer hover:bg-gray-100 p-1 rounded-md"
+          {/* Prompt Node */}
+          <TooltipPlus
+            position="right"
+            offset={4}
+            hideArrow
+            popupClassName="!p-0 !bg-white"
+            popupContent={
+              <div className="flex items-center gap-1 px-2 h-6 text-xs font-medium text-gray-700 rounded-lg border-[0.5px] border-gray-200">
+                Use the Prompt node to create prompts for your model
+              </div>
+            }
           >
-            <div className="flex items-center">
-              <HouseLine
-                size={22}
-                color="#6B7280"
-                weight="fill"
-                className="cursor-pointer"
-              />
-              <span className="ml-1 text-sm">Prompt</span>
-            </div>
-            <Question size={18} color={'#6B7280'} />
-          </DraggableNode>
-        </TooltipPlus>
-      </div>
-    </AnimatedDropdown>
+            <DraggableNode
+              type={BlockEnum.Prompt}
+              className="mt-2 flex items-center justify-between w-full cursor-pointer hover:bg-gray-100 p-1 rounded-md"
+            >
+              <div className="flex items-center">
+                <HouseLine
+                  size={22}
+                  color="#6B7280"
+                  weight="fill"
+                  className="cursor-pointer"
+                />
+                <span className="ml-1 text-sm">Prompt</span>
+              </div>
+              <Question size={18} color={'#6B7280'} />
+            </DraggableNode>
+          </TooltipPlus>
+        </div>
+      </AnimatedDropdown>
+    </div>
   );
 };

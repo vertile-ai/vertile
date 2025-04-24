@@ -5,11 +5,11 @@ import cn from 'classnames';
 import {
   useNodesReadOnly,
   useWorkflow,
-} from '@/src/components/workflow/hooks/hooks';
-import { useStore } from '@/src/components/workflow/store';
+} from '@/app/workflows/[id]/_components/workflow-internal/hooks/hooks';
+import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
 import TipPopup from './tip-popup';
 import { CursorClick, HandPointing, SquaresFour } from '@phosphor-icons/react';
-import { useSelectionInteractions } from '@/src/components/workflow/hooks/use-selection-interactions';
+import { useSelectionInteractions } from '@/app/workflows/[id]/_components/workflow-internal/hooks/use-selection-interactions';
 
 const Control = () => {
   const controlMode = useStore((s) => s.controlMode);

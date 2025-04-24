@@ -7,7 +7,7 @@ import { NodeConfigPanelProps, NodeData, RenderNodePanelProps } from './types';
 import { Lightning, X, PencilSimple, Check } from '@phosphor-icons/react';
 import { DatasetPanel } from '../nodes/Dataset/panel';
 import { useStoreApi } from 'reactflow';
-import { useStore } from '@/src/components/workflow/store';
+import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
 const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
   onClose,
   renderNodePanel,
@@ -23,18 +23,20 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
     null
   );
   const titleInputRef = useRef<HTMLInputElement>(null);
+
   const store = useStoreApi();
+  const { getNodes } = store.getState();
+  const nodeData = getNodes().find((node) => node.id === selectedNode)?.data;
 
   // Update local title state when selected node changes
   useEffect(() => {
-    if (selectedNode) {
-      const nodeData = selectedNode as NodeData;
+    if (nodeData) {
       setTitleValue(nodeData.title || 'Node Configuration');
       setConfigData(nodeData.config || {});
       setOriginalNodeData(JSON.parse(JSON.stringify(nodeData)));
       setHasUnsavedChanges(false);
     }
-  }, [selectedNode]);
+  }, [nodeData]);
 
   // Focus the input when entering edit mode
   useEffect(() => {
@@ -45,9 +47,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
   // Check for changes based on node type
   const checkForChanges = () => {
-    if (!selectedNode || !originalNodeData) return false;
-
-    const nodeData = selectedNode as NodeData;
+    if (!nodeData || !originalNodeData) return false;
 
     // Title change check
     if (titleValue !== (originalNodeData.title || 'Node Configuration')) {
@@ -58,7 +58,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
     switch (nodeData.type) {
       case BlockEnum.Dataset:
         // For Dataset nodes, check if file selection changed
-        const originalFileId = originalNodeData.fileId;
+        const originalFileId = originalNodeData?.fileId;
         const currentFileId = nodeData.fileId;
         return originalFileId !== currentFileId && currentFileId !== undefined;
 
@@ -74,16 +74,16 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
   // Effect to check for changes
   useEffect(() => {
-    if (selectedNode && originalNodeData) {
+    if (nodeData && originalNodeData) {
       setHasUnsavedChanges(checkForChanges());
     }
-  }, [selectedNode, configData, titleValue]);
+  }, [nodeData, configData, titleValue]);
 
   // Determine if panel should be shown (only when a node is selected)
   const shouldShowPanel = !!selectedNode;
 
   const handleClose = () => {
-    setSelectedNode(null);
+    setSelectedNode(undefined);
     onClose?.();
   };
 
@@ -102,8 +102,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
     });
 
     // For Dataset nodes, directly update the node data when a file is selected
-    if (selectedNode && (selectedNode as NodeData).type === BlockEnum.Dataset) {
-      const nodeData = selectedNode as NodeData;
+    if (nodeData && nodeData.type === BlockEnum.Dataset) {
       // Create a new node data object with the updated file information
       const updatedNode = {
         ...nodeData,
@@ -122,7 +121,6 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
   const handleTitleSave = () => {
     if (!selectedNode) return;
 
-    const nodeData = selectedNode as NodeData;
     const updatedTitle = titleValue.trim() || 'Node Configuration';
 
     // Update the node in the reactflow store
@@ -155,9 +153,6 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
   const handleApplyChanges = () => {
     if (!selectedNode || !hasUnsavedChanges) return;
-
-    const nodeData = selectedNode as NodeData;
-
     // Prepare the update based on node type
     let nodeUpdate: Partial<NodeData> = {};
 
@@ -217,7 +212,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
     } else if (e.key === 'Escape') {
       setIsEditingTitle(false);
       if (selectedNode) {
-        setTitleValue((selectedNode as NodeData).title || 'Node Configuration');
+        setTitleValue(nodeData.title || 'Node Configuration');
       }
     }
   };
@@ -236,12 +231,11 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
     }
 
     // If renderNodePanel function is provided, use it to render the panel
-    if (renderNodePanel && selectedNode) {
-      const node = selectedNode as NodeData;
+    if (renderNodePanel && nodeData) {
       const panel = renderNodePanel({
-        nodeType: node.type,
-        nodeId: node.id,
-        nodeData: node,
+        nodeType: nodeData.type,
+        nodeId: nodeData.id,
+        nodeData: nodeData,
         onConfigChange: handleConfigChange,
       });
 
@@ -262,7 +256,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
     return (
       <div className="flex-1 overflow-y-auto p-4">
         <div className="text-gray-600 p-4 bg-gray-50 rounded-md">
-          {(selectedNode && (selectedNode as NodeData).desc) ||
+          {(nodeData && nodeData.description) ||
             'No configuration options available for this node.'}
         </div>
       </div>
@@ -271,8 +265,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
   // Get the node title safely
   const getNodeTitle = () => {
-    if (!selectedNode) return 'Node Configuration';
-    return (selectedNode as NodeData).title || 'Node Configuration';
+    return nodeData.title || 'Node Configuration';
   };
 
   return (

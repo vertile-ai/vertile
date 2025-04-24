@@ -1,14 +1,15 @@
 import React, { memo, useMemo } from 'react';
 
 import { useEdges } from 'reactflow';
-import { canRunBySingle } from '@/src/components/workflow/utils';
+import { canRunBySingle } from '@/app/workflows/[id]/_components/workflow-internal/utils';
 import {
   useNodesExtraData,
   useNodesInteractions,
   useNodesReadOnly,
-} from '@/src/components/workflow/hooks/hooks';
-import { BlockEnum, Node } from '@/app/workflows/[id]/_components/nodes/types';
+} from '@/app/workflows/[id]/_components/workflow-internal/hooks/hooks';
+import { Node } from '@/app/workflows/[id]/_components/nodes/types';
 import { useNodeDataUpdate } from '../../../hooks';
+import { useStore } from '../../../../workflow-main/store';
 
 type PanelOperatorPopupProps = {
   id: string;
@@ -31,7 +32,9 @@ const PanelOperatorPopup = ({
   const { handleNodeDataUpdate } = useNodeDataUpdate();
   const { nodesReadOnly } = useNodesReadOnly();
   const nodesExtraData = useNodesExtraData();
-  const edge = edges.find((edge) => edge.target === id);
+
+  const hasChanges = useStore((s) => s.hasChanges);
+  const setHasChanges = useStore((s) => s.setHasChanges);
 
   const about = useMemo(() => {
     return nodesExtraData[data.type].about;
@@ -92,7 +95,12 @@ const PanelOperatorPopup = ({
                 flex items-center justify-between px-3 h-8 text-sm text-gray-700 rounded-lg cursor-pointer
                 hover:bg-rose-50 hover:text-red-500
                 `}
-              onClick={() => handleNodeDelete(id)}
+              onClick={() => {
+                handleNodeDelete(id);
+                if (!hasChanges) {
+                  setHasChanges(true);
+                }
+              }}
             >
               Delete
             </div>

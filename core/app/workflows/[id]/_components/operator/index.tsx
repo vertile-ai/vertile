@@ -4,6 +4,7 @@ import ZoomInOut from './zoom-in-out';
 import Control from './control';
 import React from 'react';
 import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
+import { COMPOSE_MODE } from '../workflow-main/const';
 
 const Operator = () => {
   // Get the workflow mode from the store
@@ -20,7 +21,7 @@ const Operator = () => {
       />
       <div className="flex items-center mt-1 gap-2 absolute left-4 bottom-4 z-[9]">
         <ZoomInOut />
-        {workflowMode === 'orchestration' && <Control />}
+        {workflowMode === COMPOSE_MODE && <Control />}
       </div>
     </>
   );

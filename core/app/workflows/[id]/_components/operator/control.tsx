@@ -66,7 +66,7 @@ const Control = () => {
         </div>
       </TipPopup>
       <div className="mx-[3px] w-[1px] h-3.5 bg-gray-200"></div>
-      <TipPopup title="Organize Blocks">
+      <TipPopup title="Organize">
         <div
           className={cn(
             'flex items-center justify-center w-8 h-8 rounded-lg hover:bg-black/5 hover:text-gray-700 cursor-pointer',

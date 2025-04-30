@@ -26,13 +26,7 @@ const NodeOptions: FC<NodeOptionsProps> = ({ id, data }) => {
         className="flex items-center px-0.5 h-6 bg-white rounded-lg border-[0.5px] border-gray-200 shadow-xs text-gray-600"
         onClick={(e) => e.stopPropagation()}
       >
-        <PanelOperator
-          id={id}
-          data={data}
-          offset={0}
-          onOpenChange={handleOpenChange}
-          triggerClassName="!w-5 !h-5"
-        />
+        <PanelOperator id={id} data={data} />
       </div>
     </div>
   );

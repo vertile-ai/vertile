@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["app", "alembic"]
+packages = ["app"]
 
 [project]
 name = "vertile-api"
@@ -19,7 +19,6 @@ dependencies = [
     "python-dotenv==1.0.0",
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.0",
-    "alembic>=1.7.0",
     "langchain>=0.3.24",
     "surya-ocr>=0.13.1",
     "pillow>=10.2.0,<11.0.0",
@@ -29,10 +28,19 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.18.0",
+    "pytest-mock>=3.10.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.24.0",
     "black>=22.1.0",
     "isort>=5.10.0",
     "mypy>=0.931",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["test"]
+python_files = "test_*.py"
+python_functions = "test_*"
 
 [tool.black]
 line-length = 88

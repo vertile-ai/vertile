@@ -1,6 +1,6 @@
-import os
+from typing import Optional
 from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
+
 
 class Settings(BaseSettings):
     """Application settings."""
@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     # Server settings
     HOST: str = "0.0.0.0"
     PORT: int = 8000
+
+    DATABASE_URL: Optional[str] = None
 
     class Config:
         case_sensitive = True

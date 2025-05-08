@@ -1,27 +1,16 @@
 import { PlusCircle } from '@phosphor-icons/react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 export const AnimatedDropdown = ({
   color = 'black',
-  className,
   children,
 }: {
   color?: string;
-  className?: string;
   children: any;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const iconRef = useRef<HTMLDivElement>(null);
-  const [divWidth, setDivWidth] = useState(0);
 
-  useEffect(() => {
-    if (iconRef.current) {
-      // Measure the icon's width
-      const iconWidth = iconRef.current.offsetWidth;
-      // Set the div's width based on the icon's width
-      setDivWidth(iconWidth);
-    }
-  }, []);
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };

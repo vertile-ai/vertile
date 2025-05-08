@@ -8,7 +8,7 @@ import {
 import cn from 'classnames';
 import React from 'react';
 import { TooltipPlus } from '@/app/components/ui/TooltipPlus';
-import { AnimatedDropdown } from '@/src/components/reusable/AnimatedDropdown.component';
+import { AnimatedDropdown } from '@/app/components/ui/AnimatedDropdown';
 import { BlockEnum } from '@/app/workflows/[id]/_components/nodes/types';
 import { useReactFlow } from 'reactflow';
 import {

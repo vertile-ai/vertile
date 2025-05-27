@@ -35,14 +35,16 @@ def create_application() -> FastAPI:
         version="0.1.0",
     )
 
+    logger.info(f"CORS_ORIGINS: {settings.CORS_ORIGINS}")
     # Add CORS middleware
-    application.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # application.add_middleware(
+    #     CORSMiddleware,
+    #     allow_origins=["http://localhost:[0-9]+", "http://127.0.0.1:[0-9]+"],
+    #     allow_origin_regex="https?://(localhost|127\.0\.0\.1)(:[0-9]+)?",
+    #     allow_credentials=True,
+    #     allow_methods=["*"],
+    #     allow_headers=["*"],
+    # )
 
     # Include routers
     application.include_router(api_router, prefix=settings.API_V1_STR)

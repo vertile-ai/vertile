@@ -1,9 +1,5 @@
-import os
-from pydantic import BaseSettings
-from dotenv import load_dotenv
-
-# Load environment variables from .env file if it exists
-load_dotenv()
+from typing import Optional
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -20,9 +16,11 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
+    DATABASE_URL: Optional[str] = None
+
     class Config:
         case_sensitive = True
-        env_file = ".env"
+        env_file = ".env.development"
 
 
 settings = Settings()

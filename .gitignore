@@ -1,8 +1,9 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+**/__tmp__/**
 *.py[cod]
 *$py.class
-
+.cursor/
 # C extensions
 *.so
 
@@ -171,3 +172,6 @@ activate/
 .vscode/
 
 uploads/
+
+results/
+**/results/

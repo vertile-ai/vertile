@@ -2,4 +2,4 @@
 Data models package
 """
 
-from app.models.item import Item
+from app.models.dataset_file import DatasetFile

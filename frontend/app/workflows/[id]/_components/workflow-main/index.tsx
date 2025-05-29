@@ -13,6 +13,7 @@ import { NodeSelector } from '../node-selector';
 import Operator from '../operator';
 import WorkflowHeader from '../header';
 import WorkflowInternal from '../workflow-internal';
+import WorkflowSidebar from '../workflow-sidebar';
 import { v4 } from 'uuid';
 import { getWorkflow } from '../../service';
 import { useParams } from 'next/navigation';
@@ -83,8 +84,10 @@ const WorkflowMain = ({ isNew }: { isNew?: boolean }) => {
     if (saveStatus === 'saved' && workflowId && !isNew) {
       // Refresh workflow data after successful save
       mutate(`/api/workflows/${workflowId}`);
+      // Also refresh the workflows list in the sidebar
+      mutate('/api/workflows');
     }
-  }, [saveStatus, isNew]);
+  }, [saveStatus, isNew, workflowId]);
 
   useEffect(() => {
     if (workflowData && !isNew) {
@@ -134,34 +137,67 @@ const WorkflowMain = ({ isNew }: { isNew?: boolean }) => {
 
   // If loading or error, show loading state
   if (!isNew && (isLoading || (!workflowData && !error))) {
-    return <LoadingWorkflow />;
+    return (
+      <ReactFlowProvider>
+        <div className="workflow-container">
+          <div className="flex h-full">
+            <WorkflowSidebar />
+            <div className="flex-1 flex flex-col">
+              <LoadingWorkflow />
+            </div>
+          </div>
+        </div>
+      </ReactFlowProvider>
+    );
   }
 
   // If error, show error state
   if (!isNew && error) {
-    return <WorkflowError />;
+    return (
+      <ReactFlowProvider>
+        <div className="workflow-container">
+          <div className="flex h-full">
+            <WorkflowSidebar />
+            <div className="flex-1 flex flex-col">
+              <WorkflowError />
+            </div>
+          </div>
+        </div>
+      </ReactFlowProvider>
+    );
   }
 
   return (
     <ReactFlowProvider>
       <div className="workflow-container">
-        <WorkflowHeader workflowId={workflowId} isNew={!!isNew} />
+        <div className="flex h-full">
+          {/* Left Sidebar */}
+          <WorkflowSidebar />
 
-        {(!!workflowData || !!isNew) && (
-          <>
-            <WorkflowInternal initialData={workflowData} />
-            <div className="z-[100] absolute top-20 left-8">
-              <NodeSelector />
-            </div>
-            <Operator />
-          </>
-        )}
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col">
+            <WorkflowHeader workflowId={workflowId} isNew={!!isNew} />
 
-        {!!selectedNode && (
-          <div ref={panelRef} className="config-panel panel-slide-in w-[700px]">
-            <ConfiguredNodePanel onClose={handlePanelClose} />
+            {(!!workflowData || !!isNew) && (
+              <>
+                <WorkflowInternal initialData={workflowData} />
+                <div className="z-[100] absolute top-20 left-[336px]">
+                  <NodeSelector />
+                </div>
+                <Operator />
+              </>
+            )}
+
+            {!!selectedNode && (
+              <div
+                ref={panelRef}
+                className="config-panel panel-slide-in w-[700px]"
+              >
+                <ConfiguredNodePanel onClose={handlePanelClose} />
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </ReactFlowProvider>
   );

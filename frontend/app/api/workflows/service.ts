@@ -17,7 +17,6 @@ export const workflowService = {
       data: {
         id: data.id || v4(),
         name: data.name,
-        description: data.description,
         zoom: data.zoom || 1,
         nodes: {
           create: data.nodes.map((node) => ({

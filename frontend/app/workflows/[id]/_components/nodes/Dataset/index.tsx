@@ -3,10 +3,10 @@ import React from 'react';
 
 import { type NodeDefault } from '@/app/workflows/[id]/types';
 
-import { Database, File, FilePlus } from '@phosphor-icons/react';
+import { File, FilePlus } from '@phosphor-icons/react';
 import type { DatasetNodeType } from './types';
 import { DatasetNodeInputTypes, DatasetNodeOutputTypes } from './constant';
-import { useStore, useStoreApi, type Node as ReactFlowNode } from 'reactflow';
+import { useStoreApi, type Node as ReactFlowNode } from 'reactflow';
 
 export const DatasetDefault: NodeDefault<DatasetNodeType> = {
   defaultValue: {

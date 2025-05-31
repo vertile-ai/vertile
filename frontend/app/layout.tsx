@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   description: 'AI Workflow Engine',
   icons: {
     icon: '/favicon.ico',
+    apple: '/favicon.ico',
   },
 };
 

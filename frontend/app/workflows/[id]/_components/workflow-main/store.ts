@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { useStore as useZustandStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import { WorkflowContext } from '@/app/workflows/[id]/_components/workflow-internal/context';
+import { Workflow } from '@prisma/client';
 
 // Helper function to safely access localStorage
 export const getLocalStorageItem = (key: string, defaultValue: any) => {
@@ -33,6 +34,8 @@ interface WorkflowState {
   setHasChanges: (hasChanges: boolean) => void;
   workflowId: string;
   setWorkflowId: (workflowId: string) => void;
+  workflows: Workflow[] | null;
+  setWorkflows: (workflows: Workflow[]) => void;
   workflowName: string;
   setWorkflowName: (name: string) => void;
   updateWorkflowName: (workflowId: string, name: string) => Promise<void>;
@@ -72,8 +75,8 @@ interface WorkflowState {
   setSelection: (selection: any | null) => void;
   bundleNodeSize: any | null;
   setBundleNodeSize: (bundleNodeSize: any | null) => void;
-  controlMode: string;
-  setControlMode: (controlMode: string) => void;
+  controlMode: 'hand' | 'pointer';
+  setControlMode: (controlMode: 'hand' | 'pointer') => void;
   panelMenu: any | undefined;
   setPanelMenu: (panelMenu: any | undefined) => void;
   nodeMenu: any | undefined;
@@ -104,6 +107,8 @@ interface WorkflowState {
   setConnectingNodePayload: (connectingNodePayload: any | undefined) => void;
   enteringNodePayload: any | undefined;
   setEnteringNodePayload: (enteringNodePayload: any | undefined) => void;
+  nodeSelectorVisible: boolean;
+  setNodeSelectorVisible: (visible: boolean) => void;
 }
 
 export const createWorkflowStore = () => {
@@ -121,7 +126,9 @@ export const createWorkflowStore = () => {
     hasChanges: false,
     setHasChanges: (hasChanges) => set({ hasChanges }),
     workflowId: '',
-    setWorkflowId: (workflowId) => set({ workflowId }),
+    setWorkflowId: (workflowId: string) => set({ workflowId }),
+    workflows: null,
+    setWorkflows: (workflows) => set({ workflows }),
     workflowName: '',
     setWorkflowName: (name) => set({ workflowName: name }),
     updateWorkflowName: async (workflowId, name) => {
@@ -237,6 +244,9 @@ export const createWorkflowStore = () => {
     enteringNodePayload: undefined,
     setEnteringNodePayload: (enteringNodePayload) =>
       set(() => ({ enteringNodePayload })),
+    nodeSelectorVisible: false,
+    setNodeSelectorVisible: (visible: boolean) =>
+      set(() => ({ nodeSelectorVisible: visible })),
   }));
 };
 

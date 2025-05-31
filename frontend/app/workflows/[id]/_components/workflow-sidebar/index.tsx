@@ -7,13 +7,14 @@ import { formatDistanceToNow } from 'date-fns';
 import { PlusCircle, Circuitry } from '@phosphor-icons/react';
 import { Workflow } from '@prisma/client';
 import { v4 } from 'uuid';
+import { useStore } from '../workflow-main/store';
 
 const WorkflowSidebar = () => {
   const router = useRouter();
   const params = useParams();
   const currentWorkflowId = params.id as string;
   const [isCreating, setIsCreating] = useState(false);
-
+  const setWorkflows = useStore((state) => state.setWorkflows);
   const {
     data: workflows,
     isLoading,
@@ -25,10 +26,13 @@ const WorkflowSidebar = () => {
     }
     const data = await response.json();
     // Sort by updatedAt descending
-    return data.sort(
+    const sortedData = data.sort(
       (a: Workflow, b: Workflow) =>
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
+
+    setWorkflows(sortedData);
+    return sortedData;
   });
 
   const handleNewWorkflow = async () => {
@@ -45,7 +49,6 @@ const WorkflowSidebar = () => {
         body: JSON.stringify({
           id: newWorkflowId,
           name: 'New Workflow',
-          description: '',
           zoom: 1,
           nodes: [],
           edges: [],

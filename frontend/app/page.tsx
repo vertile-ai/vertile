@@ -1,10 +1,8 @@
 'use client';
 
 import React from 'react';
-import WorkflowsPage from './workflows/page';
+import WorkflowPage from './workflows/[id]/page';
 
 export default function Home() {
-  return (
-    <WorkflowsPage />
-  );
+  return <WorkflowPage />;
 }

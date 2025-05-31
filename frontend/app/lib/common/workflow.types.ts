@@ -10,7 +10,6 @@ export interface WorkflowClient {
   id: string;
   zoom: number;
   name: string;
-  description?: string;
   nodes: WorkflowNodeClient[];
   edges: WorkflowEdgeClient[];
 }

@@ -16,13 +16,9 @@ import { getKeyboardKeyCodeBySystem } from '../workflow-internal/utils';
 
 interface WorkflowHeaderProps {
   workflowId: string;
-  isNew: boolean;
 }
 
-const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
-  workflowId,
-  isNew,
-}) => {
+const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({ workflowId }) => {
   const workflowMode = useStore((s) => s.workflowMode);
   const setWorkflowMode = useStore((s) => s.setWorkflowMode);
   const workflowExecutionStatus = useStore((s) => s.workflowExecutionStatus);
@@ -78,10 +74,8 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
   });
 
   useEffect(() => {
-    if (isNew) {
-      setHasChanges(true);
-    }
-  }, [isNew, setHasChanges]);
+    setHasChanges(true);
+  }, [setHasChanges]);
 
   // Update mode based on execution status
   useEffect(() => {

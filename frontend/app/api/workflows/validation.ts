@@ -36,7 +36,6 @@ export const workflowEdgeSchema = z.object({
 export const createWorkflowSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Workflow name is required'),
-  description: z.string().optional(),
   zoom: z.number().default(1),
   nodes: z.array(workflowNodeSchema),
   edges: z.array(workflowEdgeSchema),
@@ -44,7 +43,6 @@ export const createWorkflowSchema = z.object({
 
 export const updateWorkflowSchema = z.object({
   name: z.string().optional(),
-  description: z.string().optional(),
   zoom: z.number().optional(),
   nodes: z.array(workflowNodeSchema).optional(),
   edges: z.array(workflowEdgeSchema).optional(),

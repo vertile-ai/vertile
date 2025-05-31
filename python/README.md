@@ -1,39 +1,5 @@
 # Vertile FastAPI Backend
 
-A FastAPI backend service that provides both REST API and WebSocket functionality.
-
-## Features
-
-- REST API endpoints
-- WebSocket support for real-time communication
-- Modular architecture for easy extension
-- Configuration via environment variables
-- Modern Python packaging with pyproject.toml
-- Docker support for containerized deployment
-- PostgreSQL database integration
-
-## Project Structure
-
-```
-pycore/
-├── app/                  # Application package
-│   ├── api/              # API endpoints
-│   │   └── v1/           # API version 1
-│   │       ├── api.py    # API router
-│   │       ├── endpoints/# API endpoint modules
-│   │       └── websocket.py # WebSocket endpoints
-│   ├── core/             # Core functionality
-│   │   ├── config.py     # Application settings
-│   │   └── websocket.py  # WebSocket connection manager
-│   ├── models/           # Data models
-│   ├── services/         # Business logic
-│   └── main.py           # FastAPI application instance
-├── .env.example          # Example environment variables
-├── Dockerfile            # Docker container definition
-├── pyproject.toml        # Project metadata and dependencies
-└── run.py                # Application entry point
-```
-
 ## Getting Started
 
 ### Prerequisites

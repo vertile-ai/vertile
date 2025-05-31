@@ -1,32 +1,38 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import './style.css';
 
 import useSWR, { mutate } from 'swr';
 import { ReactFlowProvider } from 'reactflow';
 import ConfiguredNodePanel from '../node-panel';
 import { useStore } from './store';
-import LoadingWorkflow from '@/app/components/workflow/LoadingWorkflow';
+import LoadingWorkflow from '../loader';
 import WorkflowError from '@/app/components/workflow/WorkflowError';
-import { NodeSelector } from '../node-selector';
+import { NodeSelector, NodeSelectorToggle } from '../node-selector';
 import Operator from '../operator';
 import WorkflowHeader from '../header';
 import WorkflowInternal from '../workflow-internal';
-import WorkflowSidebar from '../workflow-sidebar';
-import { v4 } from 'uuid';
 import { getWorkflow } from '../../service';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import StarterSplash from '../starter-splash';
+import WorkflowReminder from '../return-splash';
+import { workflowService } from '@/app/api/workflows/service';
 
-const WorkflowMain = ({ isNew }: { isNew?: boolean }) => {
+const WorkflowMain = () => {
   const params = useParams();
+  const setWorkflowId = useStore((state) => state.setWorkflowId);
   let workflowId = useStore((state) => state.workflowId);
-  if (!workflowId && isNew) {
-    workflowId = v4();
-  }
-  if (params.id && !workflowId) {
+  if (params.id && workflowId !== params.id) {
     workflowId = params.id as string;
+    setWorkflowId(workflowId);
   }
+
+  const workflows = useStore((state) => state.workflows);
+  const nodeSelectorVisible = useStore((state) => state.nodeSelectorVisible);
+  const setNodeSelectorVisible = useStore(
+    (state) => state.setNodeSelectorVisible
+  );
 
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +40,6 @@ const WorkflowMain = ({ isNew }: { isNew?: boolean }) => {
   const setSelectedNode = useStore((s) => s.setSelectedNode);
 
   // Optimize store selectors to only select what's needed
-  const setWorkflowId = useStore((state) => state.setWorkflowId);
   const setWorkflowName = useStore((state) => state.setWorkflowName);
   const setHasChanges = useStore((state) => state.setHasChanges);
   const setLastSaved = useStore((state) => state.setLastSaved);
@@ -75,33 +80,30 @@ const WorkflowMain = ({ isNew }: { isNew?: boolean }) => {
     data: workflowData,
     error,
     isLoading,
-  } = useSWR(!isNew && workflowId ? `/api/workflows/${workflowId}` : null, () =>
+  } = useSWR(workflowId ? `/api/workflows/${workflowId}` : null, () =>
     getWorkflow(workflowId)
   );
 
   // Watch for save status and refresh data when saved
   useEffect(() => {
-    if (saveStatus === 'saved' && workflowId && !isNew) {
+    if (saveStatus === 'saved' && workflowId) {
       // Refresh workflow data after successful save
       mutate(`/api/workflows/${workflowId}`);
       // Also refresh the workflows list in the sidebar
       mutate('/api/workflows');
     }
-  }, [saveStatus, isNew, workflowId]);
+  }, [saveStatus, workflowId]);
 
   useEffect(() => {
-    if (workflowData && !isNew) {
+    if (workflowData) {
       if (workflowData.name) {
         setWorkflowName(workflowData.name);
       }
       if (workflowData.createdAt) {
         setLastSaved(new Date(workflowData.createdAt).getTime());
       }
-    } else if (isNew) {
-      setWorkflowName('New Workflow');
-      setHasChanges(true);
     }
-  }, [workflowData, setWorkflowId, isNew, setHasChanges, setWorkflowName]);
+  }, [workflowData, setWorkflowId, setHasChanges, setWorkflowName]);
 
   // Handle panel close
   const handlePanelClose = () => {
@@ -135,13 +137,41 @@ const WorkflowMain = ({ isNew }: { isNew?: boolean }) => {
     };
   }, [selectedNode, handleClickAway]);
 
-  // If loading or error, show loading state
-  if (!isNew && (isLoading || (!workflowData && !error))) {
+  if (!workflowId && workflows && !workflows.length) {
     return (
       <ReactFlowProvider>
-        <div className="workflow-container">
+        <div className="h-screen w-full overflow-hidden relative flex flex-col">
           <div className="flex h-full">
-            <WorkflowSidebar />
+            <div className="flex-1 flex flex-col">
+              <StarterSplash />
+            </div>
+          </div>
+        </div>
+      </ReactFlowProvider>
+    );
+  }
+
+  // If no workflow is selected but workflows exist, show reminder
+  if (!workflowId && workflows && workflows.length > 0) {
+    return (
+      <ReactFlowProvider>
+        <div className="h-screen w-full overflow-hidden relative flex flex-col">
+          <div className="flex h-full">
+            <div className="flex-1 flex flex-col">
+              <WorkflowReminder />
+            </div>
+          </div>
+        </div>
+      </ReactFlowProvider>
+    );
+  }
+
+  // If loading, show loading state
+  if (isLoading || !workflowData) {
+    return (
+      <ReactFlowProvider>
+        <div className="h-screen w-full overflow-hidden relative flex flex-col">
+          <div className="flex h-full">
             <div className="flex-1 flex flex-col">
               <LoadingWorkflow />
             </div>
@@ -152,12 +182,11 @@ const WorkflowMain = ({ isNew }: { isNew?: boolean }) => {
   }
 
   // If error, show error state
-  if (!isNew && error) {
+  if (error) {
     return (
       <ReactFlowProvider>
-        <div className="workflow-container">
+        <div className="h-screen w-full overflow-hidden relative flex flex-col">
           <div className="flex h-full">
-            <WorkflowSidebar />
             <div className="flex-1 flex flex-col">
               <WorkflowError />
             </div>
@@ -169,24 +198,32 @@ const WorkflowMain = ({ isNew }: { isNew?: boolean }) => {
 
   return (
     <ReactFlowProvider>
-      <div className="workflow-container">
-        <div className="flex h-full">
-          {/* Left Sidebar */}
-          <WorkflowSidebar />
+      <div className="h-screen w-full overflow-hidden relative flex flex-col">
+        {/* Header */}
+        <WorkflowHeader workflowId={workflowId} />
 
-          {/* Main Content Area */}
-          <div className="flex-1 flex flex-col">
-            <WorkflowHeader workflowId={workflowId} isNew={!!isNew} />
+        {/* Main content area with sidebar and workflow */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Node Selector Sidebar */}
+          {nodeSelectorVisible && (
+            <div className="z-[100] absolute left-0 h-full">
+              <NodeSelector />
+            </div>
+          )}
 
-            {(!!workflowData || !!isNew) && (
+          {/* Workflow Content Area */}
+          <div className="flex-1 flex flex-col relative">
+            {/* Floating Node Selector Toggle */}
+            {!nodeSelectorVisible && (
+              <NodeSelectorToggle onOpen={() => setNodeSelectorVisible(true)} />
+            )}
+
+            {
               <>
                 <WorkflowInternal initialData={workflowData} />
-                <div className="z-[100] absolute top-20 left-[336px]">
-                  <NodeSelector />
-                </div>
                 <Operator />
               </>
-            )}
+            }
 
             {!!selectedNode && (
               <div

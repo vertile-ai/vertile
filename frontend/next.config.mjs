@@ -20,7 +20,11 @@ const nextConfig = {
     return [
       {
         source: '/workflow',
-        destination: '/workflows/new',
+        destination: '/',
+      },
+      {
+        source: '/workflows',
+        destination: '/',
       },
     ];
   },

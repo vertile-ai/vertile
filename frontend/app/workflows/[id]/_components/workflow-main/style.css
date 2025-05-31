@@ -19,6 +19,43 @@
   }
 }
 
+/* Node Selector Animations */
+@keyframes slideIn {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .panel-slide-in {
   animation: slideInPanel 0.3s ease-out;
 }
@@ -34,9 +71,9 @@
 
 .config-panel {
   position: absolute;
-  top: 56px;
+  top: 0;
   right: 0;
-  height: calc(100vh - 56px);
+  height: 100%;
   background: white;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
   z-index: 999;

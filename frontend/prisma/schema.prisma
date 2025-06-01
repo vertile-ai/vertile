@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model WorkflowExecution {
+  id         String   @id @default(uuid())
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  snapshot   Json // The snapshot of the workflow at the time of execution
+  status     String
+  result     Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Workflow {
+  id         String              @id @default(uuid())
+  name       String
+  zoom       Float               @default(1)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  nodes      WorkflowNode[]
+  edges      WorkflowEdge[]
+  executions WorkflowExecution[]
+
+  @@unique(id)
+}
+
+model WorkflowNode {
+  id         String   @id @default(uuid())
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflowId String
+  positionX  Int
+  positionY  Int
+  type       String
+  rawData    Json
+  data       Json
+
+  @@unique(id)
+}
+
+model WorkflowEdge {
+  id           String   @id @default(uuid())
+  workflow     Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflowId   String
+  data         Json // The custom edge data
+  rawData      Json
+  sourceHandle String?
+  targetHandle String?
+  source       String
+  target       String
+  type         String?
+
+  @@unique(id)
+}
+
+model DatasetFile {
+  id          String   @id @default(uuid())
+  filename    String
+  contentType String
+  size        Int
+  path        String
+  uploadedAt  DateTime @default(now())
+
+  @@unique(id)
+}

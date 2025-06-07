@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 from PIL import Image
 
-from app.services.ocr_execution import OCRExecution, OCREngine, OCRStatus
+from python.app.executors.ocr_execution import OCRExecutor
 
 
 @pytest.fixture

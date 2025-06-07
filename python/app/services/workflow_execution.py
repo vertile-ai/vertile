@@ -1,8 +1,10 @@
 import asyncio
 import logging
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Callable
 
 from app.services.websocket_manager import websocket_manager
+from app.executors.llm_executor import LLMExecutor
+from app.executors.base_executor import BaseExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +16,146 @@ class NodeStatus:
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+
+
+# Global registry for node executors
+NODE_EXECUTORS: Dict[str, BaseExecutor] = {
+    "llm": LLMExecutor,
+}
+
+
+# Example node executor functions
+async def execute_data_processor(
+    node: Dict, previous_results: Dict, workflow_id: str
+) -> Dict:
+    """Execute data processor node"""
+    node_id = node["id"]
+    logger.info(f"Processing data for node {node_id}")
+
+    # Simulate data processing
+    await asyncio.sleep(1.5)
+
+    return {
+        "node_id": node_id,
+        "type": "data_processor",
+        "status": "success",
+        "execution_time": 1.5,
+        "result": f"Data processed successfully for node {node_id}",
+        "output": {"processed_records": 100, "data_size": "5MB"},
+    }
+
+
+async def execute_api_call(
+    node: Dict, previous_results: Dict, workflow_id: str
+) -> Dict:
+    """Execute API call node"""
+    node_id = node["id"]
+    api_config = node.get("data", {}).get("config", {})
+    logger.info(f"Making API call for node {node_id}")
+
+    # Simulate API call
+    await asyncio.sleep(2.5)
+
+    return {
+        "node_id": node_id,
+        "type": "api_call",
+        "status": "success",
+        "execution_time": 2.5,
+        "result": f"API call completed for node {node_id}",
+        "output": {"response_code": 200, "data": "API response data"},
+    }
+
+
+async def execute_email_sender(
+    node: Dict, previous_results: Dict, workflow_id: str
+) -> Dict:
+    """Execute email sender node"""
+    node_id = node["id"]
+    email_config = node.get("data", {}).get("config", {})
+    logger.info(f"Sending email for node {node_id}")
+
+    # Simulate email sending
+    await asyncio.sleep(1.0)
+
+    return {
+        "node_id": node_id,
+        "type": "email_sender",
+        "status": "success",
+        "execution_time": 1.0,
+        "result": f"Email sent successfully for node {node_id}",
+        "output": {
+            "recipients": ["user@example.com"],
+            "subject": "Workflow Notification",
+        },
+    }
+
+
+async def execute_file_processor(
+    node: Dict, previous_results: Dict, workflow_id: str
+) -> Dict:
+    """Execute file processor node"""
+    node_id = node["id"]
+    file_config = node.get("data", {}).get("config", {})
+    logger.info(f"Processing file for node {node_id}")
+
+    # Simulate file processing
+    await asyncio.sleep(3.0)
+
+    return {
+        "node_id": node_id,
+        "type": "file_processor",
+        "status": "success",
+        "execution_time": 3.0,
+        "result": f"File processed successfully for node {node_id}",
+        "output": {"files_processed": 5, "total_size": "15MB"},
+    }
+
+
+async def execute_conditional(
+    node: Dict, previous_results: Dict, workflow_id: str
+) -> Dict:
+    """Execute conditional node"""
+    node_id = node["id"]
+    condition_config = node.get("data", {}).get("config", {})
+    logger.info(f"Evaluating condition for node {node_id}")
+
+    # Simulate condition evaluation
+    await asyncio.sleep(0.5)
+
+    # Simple condition evaluation (can be made more complex)
+    condition_result = True  # This would be actual condition logic
+
+    return {
+        "node_id": node_id,
+        "type": "conditional",
+        "status": "success",
+        "execution_time": 0.5,
+        "result": f"Condition evaluated for node {node_id}",
+        "output": {"condition_met": condition_result},
+    }
+
+
+# Register node executors in the global dictionary
+NODE_EXECUTORS.update(
+    {
+        "data_processor": execute_data_processor,
+        "api_call": execute_api_call,
+        "email_sender": execute_email_sender,
+        "file_processor": execute_file_processor,
+        "conditional": execute_conditional,
+    }
+)
+
+
+def register_node_executor(node_type: str, executor_func: Callable) -> None:
+    """Register a new node executor function"""
+    NODE_EXECUTORS[node_type] = executor_func
+    logger.info(f"Registered executor for node type: {node_type}")
+
+
+def get_registered_node_types() -> List[str]:
+    """Get list of all registered node types"""
+    return list(NODE_EXECUTORS.keys())
 
 
 class WorkflowExecutionService:
@@ -225,26 +367,37 @@ class WorkflowExecutionService:
         node_statuses: Dict[str, str],
     ) -> Dict:
         """
-        Execute a single node in the workflow.
-
-        Currently mocks execution by waiting for 2 seconds.
+        Execute a single node in the workflow using the global executor registry.
         """
         node_id = node["id"]
         node_type = node["data"]["type"]
 
         logger.info(f"Executing node {node_id} of type {node_type}")
 
-        # Mock execution time
-        await asyncio.sleep(2)
+        # Get the executor function from the global registry
+        executor_class = NODE_EXECUTORS.get(node_type)
+        if not executor_class:
+            raise ValueError(
+                f"Unknown node type: {node_type}. Available types: {list(NODE_EXECUTORS.keys())}"
+            )
 
-        # Return mock result
-        return {
-            "node_id": node_id,
-            "type": node_type,
-            "status": "success",
-            "execution_time": 2.0,
-            "result": f"Executed {node_type} node with ID {node_id}",
-        }
+        # Execute the node using the appropriate executor
+        executor = executor_class()
+        logger.info(f"Executor: {executor}")
+        try:
+            result = await executor.execute(node)
+            return result
+        except Exception as e:
+            logger.error(f"Error in executor for node type {node_type}: {str(e)}")
+            # Return error result
+            return {
+                "node_id": node_id,
+                "type": node_type,
+                "status": "error",
+                "execution_time": 0.0,
+                "result": f"Error executing {node_type} node: {str(e)}",
+                "error": str(e),
+            }
 
     async def _report_execution_status(
         self,

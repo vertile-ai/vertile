@@ -17,6 +17,8 @@ from PIL import Image
 from surya.recognition import RecognitionPredictor
 from surya.detection import DetectionPredictor
 
+from app.executors.base_executor import BaseExecutor
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,16 +37,13 @@ class OCRStatus(Enum):
     FAILED = "failed"
 
 
-class OCRExecution:
+class OCRExecutor(BaseExecutor):
     """
     Handles asynchronous OCR processing jobs.
 
     This class manages OCR execution using different OCR engines.
     Currently supports Surya OCR.
     """
-
-    # Class variable to store active jobs
-    _jobs: Dict[str, Dict[str, Any]] = {}
 
     def __init__(
         self,
@@ -70,42 +69,6 @@ class OCRExecution:
         self.result = None
         self.error = None
 
-        # Register job in the jobs dictionary
-        OCRExecution._jobs[self.job_id] = {
-            "job_id": self.job_id,
-            "file_path": file_path,
-            "ocr_engine": ocr_engine.value,
-            "languages": languages,
-            "status": self.status.value,
-            "created_at": self.created_at,
-            "completed_at": None,
-            "result": None,
-            "error": None,
-        }
-
-    @classmethod
-    def get_job(cls, job_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Get OCR job status and result by job ID.
-
-        Args:
-            job_id: ID of the OCR job
-
-        Returns:
-            Job information if found, None otherwise
-        """
-        return cls._jobs.get(job_id)
-
-    @classmethod
-    def list_jobs(cls) -> List[Dict[str, Any]]:
-        """
-        List all OCR jobs.
-
-        Returns:
-            List of OCR jobs
-        """
-        return list(cls._jobs.values())
-
     async def execute(self) -> str:
         """
         Execute OCR job asynchronously.
@@ -125,7 +88,6 @@ class OCRExecution:
         try:
             # Update status to processing
             self.status = OCRStatus.PROCESSING
-            OCRExecution._jobs[self.job_id]["status"] = self.status.value
 
             # Check if file exists
             if not os.path.exists(self.file_path):
@@ -142,15 +104,6 @@ class OCRExecution:
             self.status = OCRStatus.COMPLETED
             self.completed_at = datetime.now()
 
-            # Update job dictionary
-            OCRExecution._jobs[self.job_id].update(
-                {
-                    "status": self.status.value,
-                    "completed_at": self.completed_at,
-                    "result": self.result,
-                }
-            )
-
             logger.info(f"OCR job {self.job_id} completed successfully")
 
         except Exception as e:
@@ -159,15 +112,6 @@ class OCRExecution:
             self.status = OCRStatus.FAILED
             self.error = str(e)
             self.completed_at = datetime.now()
-
-            # Update job dictionary
-            OCRExecution._jobs[self.job_id].update(
-                {
-                    "status": self.status.value,
-                    "completed_at": self.completed_at,
-                    "error": self.error,
-                }
-            )
 
     async def _process_with_surya_ocr(self) -> Dict[str, Any]:
         """

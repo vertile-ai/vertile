@@ -162,28 +162,43 @@ class LLMExecutor(BaseExecutor):
         )
 
         try:
+            # Validate configuration first
+            if not messages:
+                raise ValueError(
+                    "Either 'messages' or 'prompt_template' must be provided"
+                )
+
             # Get LLM instance
+            # Filter out keys that are already passed explicitly to avoid conflicts
+            additional_config = {
+                k: v
+                for k, v in config.items()
+                if k
+                not in [
+                    "provider",
+                    "model",
+                    "temperature",
+                    "max_tokens",
+                    "api_key",
+                    "messages",
+                ]
+            }
+
             llm = self._get_llm_instance(
                 provider=provider,
                 model=model,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 api_key=api_key,
-                **config,  # Pass any additional config
+                **additional_config,  # Pass any additional config
             )
 
             # Create and execute chain
             start_time = asyncio.get_event_loop().time()
-            response = None
 
-            if messages:
-                # Use messages format
-                formatted_messages = self._format_messages(messages)
-                response = await llm.ainvoke(formatted_messages)
-            else:
-                raise ValueError(
-                    "Either 'messages' or 'prompt_template' must be provided"
-                )
+            # Use messages format
+            formatted_messages = self._format_messages(messages)
+            response = await llm.ainvoke(formatted_messages)
 
             execution_time = asyncio.get_event_loop().time() - start_time
 
@@ -240,7 +255,3 @@ class LLMExecutor(BaseExecutor):
     def get_supported_providers(self) -> List[str]:
         """Get list of supported LLM providers."""
         return [provider.value for provider in LLMProvider]
-
-
-# Create singleton instance
-llm_executor = LLMExecutor()

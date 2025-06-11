@@ -42,6 +42,7 @@ asyncio_mode = "auto"
 testpaths = ["test"]
 python_files = "test_*.py"
 python_functions = "test_*"
+pythonpath = ["."]
 
 [tool.black]
 line-length = 88

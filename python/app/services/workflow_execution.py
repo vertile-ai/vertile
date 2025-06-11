@@ -90,9 +90,7 @@ async def execute_email_sender(
     }
 
 
-async def execute_file_processor(
-    node: Dict, previous_results: Dict, workflow_id: str
-) -> Dict:
+async def execute_file_processor(node: Dict) -> Dict:
     """Execute file processor node"""
     node_id = node["id"]
     file_config = node.get("data", {}).get("config", {})

@@ -1,5 +1,5 @@
 """
-Tests for OCRExecution service.
+Tests for OCRExecutor service.
 """
 
 import os
@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 from PIL import Image
 
-from python.app.executors.ocr_execution import OCRExecutor
+from python.app.executors.ocr_executor import OCRExecutor
 
 
 @pytest.fixture
@@ -41,8 +41,8 @@ def mock_recognition_result():
     return [mock_result]
 
 
-class TestOCRExecution:
-    """Test cases for OCRExecution class."""
+class TestOCRExecutor:
+    """Test cases for OCRExecutor class."""
 
     async def _wait_for_ocr_job(self, job_id, timeout=10):
         """Helper method to wait for an OCR job to complete.
@@ -62,15 +62,15 @@ class TestOCRExecution:
             await asyncio.sleep(poll_interval)
             waited += poll_interval
 
-            job_info = OCRExecution.get_job(job_id)
+            job_info = OCRExecutor.get_job(job_id)
             if job_info["status"] in ["completed", "failed"]:
                 return job_info
 
-        return OCRExecution.get_job(job_id)  # Return current state even if not complete
+        return OCRExecutor.get_job(job_id)  # Return current state even if not complete
         """Test successful OCR execution."""
 
         # Create OCR execution instance
-        ocr = OCRExecution(file_path=sample_image_file)
+        ocr = OCRExecutor(file_path=sample_image_file)
 
         # Mock the Surya OCR process
         with (
@@ -100,7 +100,7 @@ class TestOCRExecution:
     async def test_execute_file_not_found(self):
         """Test OCR execution with non-existent file."""
         # Create OCR execution with non-existent file
-        ocr = OCRExecution(file_path="__fixtures__/non_existent_file.png")
+        ocr = OCRExecutor(file_path="__fixtures__/non_existent_file.png")
 
         # Execute OCR job
         job_id = await ocr.execute()
@@ -119,7 +119,7 @@ class TestOCRExecution:
     ):
         """Test OCR execution with the easy_clear.png fixture image."""
         # Create OCR execution instance with real image file
-        ocr = OCRExecution(file_path=easy_clear_image_file)
+        ocr = OCRExecutor(file_path=easy_clear_image_file)
 
         # Mock the Surya OCR process
         with (
@@ -156,7 +156,7 @@ class TestOCRExecution:
         It's marked as an integration test since it depends on the actual OCR engine.
         """
         # Create OCR execution instance with real image file
-        ocr = OCRExecution(file_path=easy_clear_image_file)
+        ocr = OCRExecutor(file_path=easy_clear_image_file)
 
         # Execute OCR job with real OCR processing
         job_id = await ocr.execute()
@@ -228,7 +228,7 @@ class TestOCRExecution:
         that the OCR engine can properly extract monetary values and other numbers.
         """
         # Create OCR execution instance with real image file
-        ocr = OCRExecution(file_path=easy_clear_image_file)
+        ocr = OCRExecutor(file_path=easy_clear_image_file)
 
         # Execute OCR job with real OCR processing
         job_id = await ocr.execute()
@@ -344,7 +344,7 @@ class TestOCRExecution:
     ):
         """Test OCR execution with custom language setting."""
         # Create OCR execution with specific language
-        ocr = OCRExecution(file_path=sample_image_file, languages=["fr"])
+        ocr = OCRExecutor(file_path=sample_image_file, languages=["fr"])
 
         # Mock the Surya OCR process
         with (

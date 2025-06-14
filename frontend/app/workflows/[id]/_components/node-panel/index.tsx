@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BlockEnum } from '@/app/workflows/[id]/_components/nodes/types';
-import { PromptPanel } from '@/app/workflows/[id]/_components/nodes/Prompt/panel';
+import { LLMPanel } from '@/app/workflows/[id]/_components/nodes/llm/panel';
 import { TrainPanel } from '@/app/workflows/[id]/_components/nodes/Train/panel';
 import { ModelPanel } from '@/app/workflows/[id]/_components/nodes/Model/panel';
 import { NodeConfigPanelProps, NodeData, RenderNodePanelProps } from './types';
@@ -362,7 +362,7 @@ const nodePanels: Record<BlockEnum, React.ComponentType<any>> = {
   [BlockEnum.Dataset]: DatasetPanel,
   [BlockEnum.Model]: ModelPanel,
   [BlockEnum.Train]: TrainPanel,
-  [BlockEnum.Prompt]: PromptPanel,
+  [BlockEnum.LLM]: LLMPanel,
 };
 
 // Create a configured NodeConfigPanel that knows how to render each node type

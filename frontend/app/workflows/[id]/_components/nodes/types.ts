@@ -3,12 +3,12 @@ import { ModelNodeType } from './Model/types';
 import type { Node as ReactFlowNode } from 'reactflow';
 import { TrainNodeType } from './Train/types';
 import { NodeRunningStatus } from '../../types';
-import { PromptNodeType } from './Prompt/types';
+import { LLMNodeType } from './llm/types';
 
 export enum BlockEnum {
   Train = 'train',
   Dataset = 'dataset',
-  Prompt = 'prompt',
+  LLM = 'llm',
   Model = 'model',
 }
 
@@ -52,7 +52,7 @@ export type AllNodeTypes =
   | DatasetNodeType
   | ModelNodeType
   | TrainNodeType
-  | PromptNodeType;
+  | LLMNodeType;
 
 export type Node<T extends AllNodeTypes = AllNodeTypes> = ReactFlowNode<T>;
 

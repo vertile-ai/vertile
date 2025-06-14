@@ -73,10 +73,10 @@ export const NodeSelector = () => {
             tooltip="Use the Model node to specify which model to use"
           />
           <NodeItem
-            type={BlockEnum.Prompt}
+            type={BlockEnum.LLM}
             icon={<HouseLine size={20} color="#6366F1" weight="fill" />}
-            label="Prompt"
-            tooltip="Use the Prompt node to create prompts for your model"
+            label="LLM"
+            tooltip="Use the LLM node to create prompts for your model"
           />
         </div>
       </div>

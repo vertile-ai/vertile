@@ -26,7 +26,7 @@ export const ModelDefault: NodeDefault<ModelNodeType> = {
 const ModelNodeImpl: FC<ModelNodeType> = (data) => {
   // Define input/output types for the node
   const inputs = [
-    { id: 'model-input-prompt', label: 'Prompt', ioType: IOType.text },
+    { id: 'model-input-prompt', label: 'LLM', ioType: IOType.text },
     { id: 'model-input-parameters', label: 'Params', ioType: IOType.kv },
   ];
 

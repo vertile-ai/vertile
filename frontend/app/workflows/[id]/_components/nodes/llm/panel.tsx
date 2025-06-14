@@ -1,14 +1,12 @@
-export const PromptPanel: React.FC<any> = (data) => {
+export const LLMPanel: React.FC<any> = (data) => {
   return (
     <div className="space-y-4">
-      <h3 className="text-md font-medium text-indigo-700">
-        Prompt Configuration
-      </h3>
+      <h3 className="text-md font-medium text-indigo-700">LLM Configuration</h3>
 
       <div className="bg-white p-3 rounded-md border border-indigo-100">
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Prompt Template
+            LLM Template
           </label>
           <textarea
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono"

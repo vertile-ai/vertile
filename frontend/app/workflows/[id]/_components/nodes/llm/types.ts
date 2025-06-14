@@ -1,6 +1,6 @@
 import { CommonNodeType } from '../types';
 
-export interface PromptNodeType extends CommonNodeType {
+export interface LLMNodeType extends CommonNodeType {
   title: string;
   prompt: string;
   temperature: number;

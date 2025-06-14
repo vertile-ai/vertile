@@ -8,7 +8,7 @@ import DatasetNode, {
   DatasetDefault,
 } from '@/app/workflows/[id]/_components/nodes/Dataset';
 import ModelNodeImpl, { ModelDefault } from '../nodes/Model';
-import PromptNodeImpl, { PromptDefault } from '../nodes/Prompt';
+import LLMNodeImpl, { LLMDefault } from '../nodes/llm';
 
 export const COMPOSE_MODE = 0b01;
 export const EXECUTIONS_MODE = 0b10;
@@ -17,22 +17,22 @@ export const NodeComponentMap: Record<BlockEnum, ComponentType<any>> = {
   [BlockEnum.Dataset]: DatasetNode,
   [BlockEnum.Train]: TrainNode,
   [BlockEnum.Model]: ModelNodeImpl,
-  [BlockEnum.Prompt]: PromptNodeImpl,
+  [BlockEnum.LLM]: LLMNodeImpl,
 };
 
 // This k-v map means, these v nodes can accept input k.
 export const NodeInputTypesReverse: Record<IOType, BlockEnum[]> = {
-  [IOType.llm]: [BlockEnum.Prompt, BlockEnum.Train],
-  [IOType.text]: [BlockEnum.Prompt],
-  [IOType.kv]: [BlockEnum.Prompt],
+  [IOType.llm]: [BlockEnum.LLM, BlockEnum.Train],
+  [IOType.text]: [BlockEnum.LLM],
+  [IOType.kv]: [BlockEnum.LLM],
   [IOType.file]: [],
 };
 
 // This k-v map means, these v nodes can output k.
 export const NodeOutputTypesReverse: Record<IOType, BlockEnum[]> = {
   [IOType.llm]: [BlockEnum.Train],
-  [IOType.text]: [BlockEnum.Prompt],
-  [IOType.kv]: [BlockEnum.Prompt],
+  [IOType.text]: [BlockEnum.LLM],
+  [IOType.kv]: [BlockEnum.LLM],
   [IOType.file]: [BlockEnum.Dataset],
 };
 
@@ -61,13 +61,13 @@ export const NODES_EXTRA_DATA: Record<BlockEnum, NodesExtraData> = {
     getAvailableNextNodes: ModelDefault.getAvailableNextNodes,
     checkValid: ModelDefault.checkValid,
   },
-  [BlockEnum.Prompt]: {
+  [BlockEnum.LLM]: {
     about: 'Generate text using a prompt and a model',
     availablePrevNodes: [],
     availableNextNodes: [],
-    getAvailablePrevNodes: PromptDefault.getAvailablePrevNodes,
-    getAvailableNextNodes: PromptDefault.getAvailableNextNodes,
-    checkValid: PromptDefault.checkValid,
+    getAvailablePrevNodes: LLMDefault.getAvailablePrevNodes,
+    getAvailableNextNodes: LLMDefault.getAvailableNextNodes,
+    checkValid: LLMDefault.checkValid,
   },
 };
 
@@ -88,11 +88,11 @@ export const NODES_INITIAL_DATA = {
     desc: '',
     ...ModelDefault.defaultValue,
   },
-  [BlockEnum.Prompt]: {
-    type: BlockEnum.Prompt,
-    title: 'Prompt',
+  [BlockEnum.LLM]: {
+    type: BlockEnum.LLM,
+    title: 'LLM',
     desc: 'Generate text using a prompt and a model',
-    ...PromptDefault.defaultValue,
+    ...LLMDefault.defaultValue,
   },
 };
 

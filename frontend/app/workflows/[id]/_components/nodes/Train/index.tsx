@@ -14,7 +14,7 @@ export const TrainDefault: NodeDefault<TrainNodeType> = {
     return [BlockEnum.Dataset] as BlockEnum[];
   },
   getAvailableNextNodes() {
-    return [BlockEnum.Prompt] as BlockEnum[];
+    return [BlockEnum.LLM] as BlockEnum[];
   },
   checkValid() {
     return {

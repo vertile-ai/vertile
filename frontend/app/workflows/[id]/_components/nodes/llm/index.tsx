@@ -1,13 +1,13 @@
 import type { FC } from 'react';
 import React from 'react';
 
-import { BlockEnum, IOType, type CommonNodeType } from '../types';
+import { BlockEnum, IOType } from '../types';
 
 import { ChatText } from '@phosphor-icons/react';
-import type { PromptNodeType } from './types';
+import type { LLMNodeType } from './types';
 import { NodeDefault } from '../../../types';
 
-export const PromptDefault: NodeDefault<PromptNodeType> = {
+export const LLMDefault: NodeDefault<LLMNodeType> = {
   defaultValue: {
     description: 'Creates prompts for LLM interactions',
     temperature: 0.7,
@@ -26,8 +26,8 @@ export const PromptDefault: NodeDefault<PromptNodeType> = {
   },
 };
 
-const PromptNodeImpl: FC<PromptNodeType> = (data) => {
-  // Define input/output types for the node using the predefined PromptNodeIO
+const LLMNodeImpl: FC<LLMNodeType> = (data) => {
+  // Define input/output types for the node using the predefined LLMNodeIO
   const inputs = [
     {
       id: 'prompt-input-context',
@@ -45,7 +45,7 @@ const PromptNodeImpl: FC<PromptNodeType> = (data) => {
   ];
 
   const icon = <ChatText className="shrink-0" size={16} color={'black'} />;
-  const nodeType = 'Prompt';
+  const nodeType = 'LLM';
   const description =
     data.description || 'Creates prompts for LLM interactions';
 
@@ -104,4 +104,4 @@ const PromptNodeImpl: FC<PromptNodeType> = (data) => {
   );
 };
 
-export default PromptNodeImpl;
+export default LLMNodeImpl;

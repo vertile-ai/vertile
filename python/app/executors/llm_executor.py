@@ -7,9 +7,7 @@ from enum import Enum
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_community.llms import Ollama
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from app.executors.base_executor import BaseExecutor
@@ -66,12 +64,6 @@ class LLMExecutor(BaseExecutor):
                     max_output_tokens=kwargs.get("max_tokens", 1000),
                     google_api_key=kwargs.get("api_key"),
                 )
-            elif provider == LLMProvider.OLLAMA.value:
-                llm = Ollama(
-                    model=model,
-                    temperature=kwargs.get("temperature", 0.7),
-                    base_url=kwargs.get("base_url", "http://localhost:11434"),
-                )
             elif provider == LLMProvider.AZURE_OPENAI.value:
                 llm = ChatOpenAI(
                     model=model,
@@ -93,16 +85,6 @@ class LLMExecutor(BaseExecutor):
                 f"Failed to create LLM instance for {provider}:{model}: {str(e)}"
             )
             raise
-
-    def _create_prompt_template(self, template_type: str, template_content: str) -> Any:
-        """Create a prompt template based on type."""
-        if template_type == "chat":
-            return ChatPromptTemplate.from_template(template_content)
-        elif template_type == "simple":
-            return PromptTemplate.from_template(template_content)
-        else:
-            # Default to chat template
-            return ChatPromptTemplate.from_template(template_content)
 
     def _format_messages(self, messages: List[Dict[str, str]]) -> List[Any]:
         """Format messages for langchain."""

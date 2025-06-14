@@ -7,15 +7,9 @@ export class WorkflowWebSocket {
   private messageHandlers: Record<string, ((data: any) => void)[]> = {};
   private workflowId: string;
   private url: string;
-  private autoReconnect: boolean;
-  private reconnectInterval: number = 3000; // 3 seconds
-  private reconnectAttempts: number = 0;
-  private maxReconnectAttempts: number = 5;
-  private reconnectTimer: NodeJS.Timeout | null = null;
 
-  constructor(workflowId: string, options?: { autoReconnect?: boolean }) {
+  constructor(workflowId: string) {
     this.workflowId = workflowId;
-    this.autoReconnect = options?.autoReconnect ?? true;
 
     // Determine WebSocket URL based on environment
     const protocol = window?.location?.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -34,104 +28,57 @@ export class WorkflowWebSocket {
         // Create new WebSocket connection
         console.log(`Connecting to ${this.url}`);
         this.socket = new WebSocket(this.url);
-
-        // Set up event handlers
         this.socket.onopen = () => {
-          console.log(`WebSocket connected for workflow ${this.workflowId}`);
-          this.reconnectAttempts = 0;
+          console.log(`✅ [WebSocket] Connected to ${this.url}`);
           resolve(this.socket!);
         };
 
-        this.socket.onclose = (event) => {
-          console.log(
-            `WebSocket disconnected for workflow ${this.workflowId}:`,
-            event
-          );
-          this.socket = null;
+        // Set up message handler to route to custom event system
+        this.socket.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            console.log(`📨 [WebSocket] Message received:`, message);
 
-          if (
-            this.autoReconnect &&
-            this.reconnectAttempts < this.maxReconnectAttempts
-          ) {
-            this.reconnectTimer = setTimeout(() => {
-              this.reconnectAttempts++;
-              console.log(
-                `Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}`
-              );
-              this.connect().catch((err) => {
-                console.error('Reconnection failed:', err);
+            // Route to specific event handlers
+            if (message.event && this.messageHandlers[message.event]) {
+              this.messageHandlers[message.event].forEach((handler) => {
+                handler(message.data);
               });
-            }, this.reconnectInterval);
+            }
+
+            // Also emit 'message' event for raw message handling
+            if (this.messageHandlers['message']) {
+              this.messageHandlers['message'].forEach((handler) => {
+                handler(message);
+              });
+            }
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
           }
         };
 
         this.socket.onerror = (error) => {
-          console.error(
-            `WebSocket error for workflow ${this.workflowId}:`,
-            error
-          );
+          console.error(`❌ [WebSocket] Connection error:`, error);
+          if (this.messageHandlers['error']) {
+            this.messageHandlers['error'].forEach((handler) => {
+              handler(error);
+            });
+          }
           reject(error);
         };
 
-        // Handle incoming messages
-        this.socket.onmessage = (event) => {
-          console.log(`🔥 [WebSocket] Raw message received:`, {
-            workflowId: this.workflowId,
-            rawData: event.data,
-            timestamp: new Date().toISOString(),
-          });
-
-          try {
-            const message = JSON.parse(event.data);
-            console.log(`📦 [WebSocket] Parsed message:`, {
-              workflowId: this.workflowId,
-              message,
-              eventType: message.event,
-              data: message.data,
-              timestamp: new Date().toISOString(),
-            });
-
-            const { event: eventType, data } = message;
-
-            // Call all event handlers registered for this event type
-            if (this.messageHandlers[eventType]) {
-              console.log(
-                `🎯 [WebSocket] Calling ${this.messageHandlers[eventType].length} handlers for event: ${eventType}`
-              );
-              this.messageHandlers[eventType].forEach((handler, index) => {
-                console.log(
-                  `🔧 [WebSocket] Calling handler ${index} for event: ${eventType}`
-                );
-                handler(data);
-              });
-            } else {
-              console.warn(
-                `⚠️ [WebSocket] No handlers registered for event: ${eventType}`
-              );
-            }
-
-            // Call general message handlers
-            if (this.messageHandlers['message']) {
-              console.log(
-                `📢 [WebSocket] Calling ${this.messageHandlers['message'].length} general message handlers`
-              );
-              this.messageHandlers['message'].forEach((handler, index) => {
-                console.log(`🔧 [WebSocket] Calling general handler ${index}`);
-                handler(message);
-              });
-            } else {
-              console.warn(
-                `⚠️ [WebSocket] No general message handlers registered`
-              );
-            }
-          } catch (error) {
-            console.error('❌ [WebSocket] Error parsing WebSocket message:', {
-              error,
-              rawData: event.data,
-              workflowId: this.workflowId,
-            });
-          }
+        this.socket.onclose = () => {
+          console.log(`🔌 [WebSocket] Connection closed`);
+          this.socket = null;
         };
+
+        // Set a timeout for connection
+        setTimeout(() => {
+          if (this.socket && this.socket.readyState !== WebSocket.OPEN) {
+            this.socket.close();
+            reject(new Error('WebSocket connection timeout'));
+          }
+        }, 10000);
       } catch (error) {
         reject(error);
       }
@@ -139,11 +86,6 @@ export class WorkflowWebSocket {
   }
 
   disconnect() {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-
     if (this.socket) {
       this.socket.close();
       this.socket = null;
@@ -160,12 +102,6 @@ export class WorkflowWebSocket {
       this.messageHandlers[event] = [];
     }
     this.messageHandlers[event].push(handler);
-
-    console.log(`✅ [WebSocket] Handler registered for event: ${event}`, {
-      workflowId: this.workflowId,
-      totalHandlers: this.messageHandlers[event].length,
-      allRegisteredEvents: Object.keys(this.messageHandlers),
-    });
 
     // Return a function to remove this handler
     return () => {

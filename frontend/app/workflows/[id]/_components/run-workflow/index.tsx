@@ -18,14 +18,16 @@ const RunWorkflowButton: React.FC<RunWorkflowButtonProps> = ({
   const store = useStoreApi();
   const saveStatus = useStore((s) => s.saveStatus);
   const setWorkflowMode = useStore((s) => s.setWorkflowMode);
+  const executionStatus = useStore((s) => s.workflowExecutionStatus);
+  const workflow = useStore((s) =>
+    s.workflows?.find((w) => w.id === workflowId)
+  );
 
-  const { executionStatus, runWorkflow } = useWorkflowExecution(workflowId);
+  const { runWorkflow } = useWorkflowExecution(workflowId);
   const [isHovered, setIsHovered] = useState(false);
 
   const handleRunWorkflow = async () => {
-    // Don't run if already executing
     if (executionStatus === 'executing') return;
-    // Don't run if saving
     if (saveStatus === 'saving') return;
 
     try {
@@ -41,6 +43,7 @@ const RunWorkflowButton: React.FC<RunWorkflowButtonProps> = ({
       // Create workflow data object
       const workflowData = {
         id: workflowId,
+        name: workflow!.name,
         zoom: getViewport().zoom,
         nodes: nodes,
         edges: edges,

@@ -64,11 +64,6 @@ export enum TransferMethod {
   remote_url = 'remote_url',
 }
 
-export type Branch = {
-  id: string;
-  name: string;
-};
-
 export type SelectedNode<T extends AllNodeTypes = AllNodeTypes> = Pick<
   Node<T>,
   'id' | 'data'

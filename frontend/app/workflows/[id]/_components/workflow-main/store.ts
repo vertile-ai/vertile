@@ -20,6 +20,9 @@ export const setLocalStorageItem = (key: string, value: string) => {
   }
 };
 
+// Add ExecutionStatus type for workflow execution
+type ExecutionStatus = 'idle' | 'executing' | 'completed' | 'error';
+
 // Add the nodeExecutionStatuses to the store
 interface WorkflowState {
   workflowMode: 1 | 2;
@@ -46,8 +49,8 @@ interface WorkflowState {
   setHistoryWorkflowData: (historyWorkflowData: any | undefined) => void;
   showRunHistory: boolean;
   setShowRunHistory: (showRunHistory: boolean) => void;
-  workflowExecutionStatus: string;
-  setWorkflowExecutionStatus: (status: string) => void;
+  workflowExecutionStatus: ExecutionStatus;
+  setWorkflowExecutionStatus: (status: ExecutionStatus) => void;
   nodeExecutionStatuses: Record<string, string>;
   setNodeExecutionStatuses: (statuses: Record<string, string>) => void;
   updateNodeExecutionStatus: (nodeId: string, status: string) => void;

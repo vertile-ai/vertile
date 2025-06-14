@@ -179,15 +179,11 @@ class WorkflowExecutionService:
         Returns:
             A dictionary containing execution results
         """
-        # Cancel any existing execution for this workflow
         if workflow_id in self.active_executions:
-            self.active_executions[workflow_id].cancel()
-            try:
-                await self.active_executions[workflow_id]
-            except asyncio.CancelledError:
-                logger.info(f"Cancelled previous execution of workflow {workflow_id}")
+            old_task = self.active_executions[workflow_id]
+            old_task.cancel()
+            del self.active_executions[workflow_id]
 
-        # Create a new execution task
         execution_task = asyncio.create_task(
             self._execute_workflow_process(workflow_id, nodes, edges)
         )
@@ -230,10 +226,8 @@ class WorkflowExecutionService:
                 {"node_statuses": node_statuses},
             )
 
-            # Perform topological sort to find execution layers
             execution_layers = self._topological_sort(graph, in_degree)
 
-            # Execute each layer
             execution_results = {}
             for layer_idx, layer in enumerate(execution_layers):
                 layer_results = {}
@@ -272,19 +266,21 @@ class WorkflowExecutionService:
                 )
 
                 # Wait for all tasks in the layer to complete
+                layer_has_error = False
                 for node_id, task in execution_tasks:
-                    try:
-                        result = await task
-                        layer_results[node_id] = result
-                        execution_results[node_id] = result
-                        node_statuses[node_id] = NodeStatus.SUCCEEDED
-                    except Exception as e:
-                        logger.error(f"Error executing node {node_id}: {str(e)}")
+                    result = await task
+                    layer_results[node_id] = result
+                    execution_results[node_id] = result
+
+                    # Check if this node failed
+                    if result["status"] in ["error", "failed"]:
                         node_statuses[node_id] = NodeStatus.FAILED
-                        execution_results[node_id] = {
-                            "status": "error",
-                            "error": str(e),
-                        }
+                        layer_has_error = True
+                        logger.error(
+                            f"Node {node_id} failed: {result.get('error', result.get('result'))}"
+                        )
+                    else:
+                        node_statuses[node_id] = NodeStatus.SUCCEEDED
 
                 # Report node status updates
                 await self._report_execution_status(
@@ -293,7 +289,49 @@ class WorkflowExecutionService:
                     {"node_statuses": node_statuses},
                 )
 
-                # Report layer completion
+                # If any node in this layer failed, stop the entire workflow
+                if layer_has_error:
+                    # Cancel any remaining tasks if they exist
+                    for remaining_node_id, remaining_task in execution_tasks:
+                        if not remaining_task.done():
+                            remaining_task.cancel()
+
+                    # Mark remaining nodes as failed
+                    for remaining_layer in execution_layers[layer_idx + 1 :]:
+                        for remaining_node_id in remaining_layer:
+                            node_statuses[remaining_node_id] = NodeStatus.FAILED
+
+                    # Report final node status updates
+                    await self._report_execution_status(
+                        workflow_id,
+                        "node-status-update",
+                        {"node_statuses": node_statuses},
+                    )
+
+                    # Report workflow error
+                    error_message = f"Workflow execution stopped due to node failure(s) in layer {layer_idx + 1}"
+                    logger.error(
+                        f"Workflow {workflow_id} execution failed: {error_message}"
+                    )
+
+                    await self._report_execution_status(
+                        workflow_id,
+                        "workflow-execution-error",
+                        {
+                            "status": "error",
+                            "error": error_message,
+                            "failed_layer": layer_idx,
+                            "results": execution_results,
+                            "node_statuses": node_statuses,
+                        },
+                    )
+
+                    return {
+                        "status": "error",
+                        "error": error_message,
+                        "results": execution_results,
+                    }
+
                 await self._report_execution_status(
                     workflow_id,
                     "workflow-execution-progress",
@@ -306,7 +344,6 @@ class WorkflowExecutionService:
 
             logger.info(f"Workflow {workflow_id} execution completed")
 
-            # Final report of workflow completion
             await self._report_execution_status(
                 workflow_id,
                 "workflow-execution-completed",
@@ -319,6 +356,14 @@ class WorkflowExecutionService:
 
             return {"status": "completed", "results": execution_results}
 
+        except asyncio.CancelledError:
+            logger.info(f"Workflow {workflow_id} execution was cancelled")
+            await self._report_execution_status(
+                workflow_id,
+                "workflow-execution-error",
+                {"status": "cancelled", "error": "Workflow execution was cancelled"},
+            )
+            raise  # Re-raise to properly handle the cancellation
         except Exception as e:
             logger.error(f"Error executing workflow {workflow_id}: {str(e)}")
             await self._report_execution_status(
@@ -327,6 +372,10 @@ class WorkflowExecutionService:
                 {"status": "error", "error": str(e)},
             )
             return {"status": "error", "error": str(e)}
+        finally:
+            # Clean up the active execution
+            if workflow_id in self.active_executions:
+                del self.active_executions[workflow_id]
 
     def _topological_sort(
         self, graph: Dict[str, List[str]], in_degree: Dict[str, int]
@@ -384,6 +433,9 @@ class WorkflowExecutionService:
         logger.info(f"Executor: {executor}")
         try:
             result = await executor.execute(node)
+            # Ensure the result has a proper status
+            if "status" not in result:
+                result["status"] = "succeeded"
             return result
         except Exception as e:
             logger.error(f"Error in executor for node type {node_type}: {str(e)}")

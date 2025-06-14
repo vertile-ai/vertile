@@ -143,91 +143,72 @@ class LLMExecutor(BaseExecutor):
             f"Executing LLM node {node_id} with provider {provider} and model {model}"
         )
 
-        try:
-            # Validate configuration first
-            if not messages:
-                raise ValueError(
-                    "Either 'messages' or 'prompt_template' must be provided"
-                )
+        # Validate configuration first
+        if not messages:
+            raise ValueError("'messages' must be provided")
 
-            # Get LLM instance
-            # Filter out keys that are already passed explicitly to avoid conflicts
-            additional_config = {
-                k: v
-                for k, v in config.items()
-                if k
-                not in [
-                    "provider",
-                    "model",
-                    "temperature",
-                    "max_tokens",
-                    "api_key",
-                    "messages",
-                ]
-            }
+        # Get LLM instance
+        # Filter out keys that are already passed explicitly to avoid conflicts
+        additional_config = {
+            k: v
+            for k, v in config.items()
+            if k
+            not in [
+                "provider",
+                "model",
+                "temperature",
+                "max_tokens",
+                "api_key",
+                "messages",
+            ]
+        }
 
-            llm = self._get_llm_instance(
-                provider=provider,
-                model=model,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                api_key=api_key,
-                **additional_config,  # Pass any additional config
-            )
+        llm = self._get_llm_instance(
+            provider=provider,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            api_key=api_key,
+            **additional_config,  # Pass any additional config
+        )
 
-            # Create and execute chain
-            start_time = asyncio.get_event_loop().time()
+        # Create and execute chain
+        start_time = asyncio.get_event_loop().time()
 
-            # Use messages format
-            formatted_messages = self._format_messages(messages)
-            response = await llm.ainvoke(formatted_messages)
+        # Use messages format
+        formatted_messages = self._format_messages(messages)
+        response = await llm.ainvoke(formatted_messages)
 
-            execution_time = asyncio.get_event_loop().time() - start_time
+        execution_time = asyncio.get_event_loop().time() - start_time
 
-            # Format response
-            if hasattr(response, "content"):
-                response_text = response.content
-            else:
-                response_text = str(response)
+        # Format response
+        if hasattr(response, "content"):
+            response_text = response.content
+        else:
+            response_text = str(response)
 
-            result = {
-                "node_id": node_id,
-                "type": "llm",
-                "status": "success",
-                "execution_time": execution_time,
-                "result": f"LLM processing completed for node {node_id}",
-                "output": {
-                    "response": response_text,
-                    "provider": provider,
-                    "model": model,
-                    "metadata": {
-                        "temperature": temperature,
-                        "max_tokens": max_tokens,
-                        "execution_time": execution_time,
-                    },
+        result = {
+            "node_id": node_id,
+            "type": "llm",
+            "status": "success",
+            "execution_time": execution_time,
+            "result": f"LLM processing completed for node {node_id}",
+            "output": {
+                "response": response_text,
+                "provider": provider,
+                "model": model,
+                "metadata": {
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "execution_time": execution_time,
                 },
-            }
+            },
+        }
 
-            logger.info(
-                f"LLM node {node_id} completed successfully in {execution_time:.2f}s"
-            )
-            return result
-
-        except Exception as e:
-            logger.error(f"Error executing LLM node {node_id}: {str(e)}")
-            return {
-                "node_id": node_id,
-                "type": "llm",
-                "status": "error",
-                "execution_time": 0.0,
-                "result": f"Error executing LLM node: {str(e)}",
-                "error": str(e),
-                "output": {
-                    "provider": provider,
-                    "model": model,
-                    "error_details": str(e),
-                },
-            }
+        logger.info(
+            f"LLM node {node_id} completed successfully in {execution_time:.2f}s"
+        )
+        return result
 
     def clear_cache(self):
         """Clear the LLM instance cache."""

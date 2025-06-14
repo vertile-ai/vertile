@@ -4,24 +4,76 @@ import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
 import { WorkflowWebSocket } from '@/app/lib/api/websocket';
 import { EXECUTIONS_MODE } from '../const';
 
-type ExecutionStatus = 'idle' | 'executing' | 'completed' | 'error';
+// Types matching the backend NodeStatus constants
+export type NodeRunningStatus =
+  | 'not-start'
+  | 'waiting'
+  | 'running'
+  | 'succeeded'
+  | 'failed';
+
+// Node execution result structure from backend
+export interface NodeExecutionResult {
+  node_id: string;
+  type: string;
+  status: 'succeeded' | 'error' | 'failed';
+  execution_time: number;
+  result: string;
+  error?: string;
+  output?: Record<string, any>;
+}
+
+// WebSocket event data types
+export interface WorkflowExecutionStartedData {
+  status: 'executing';
+  workflow_id: string;
+}
+
+export interface WorkflowExecutionCompletedData {
+  status: 'completed';
+  results: Record<string, NodeExecutionResult>;
+  node_statuses: Record<string, NodeRunningStatus>;
+}
+
+export interface WorkflowExecutionErrorData {
+  status: 'error' | 'cancelled';
+  error: string;
+  failed_layer?: number;
+  results?: Record<string, NodeExecutionResult>;
+  node_statuses?: Record<string, NodeRunningStatus>;
+}
+
+export interface WorkflowExecutionProgressData {
+  current_layer: number;
+  nodes_completed: string[];
+  results: Record<string, NodeExecutionResult>;
+}
+
+export interface NodeStatusUpdateData {
+  node_statuses: Record<string, NodeRunningStatus>;
+}
+
+// WebSocket message wrapper
+export interface WorkflowWebSocketMessage {
+  event: string;
+  data:
+    | WorkflowExecutionStartedData
+    | WorkflowExecutionCompletedData
+    | WorkflowExecutionErrorData
+    | WorkflowExecutionProgressData
+    | NodeStatusUpdateData;
+}
 
 export function useWorkflowExecution(workflowId: string) {
-  const [executionStatus, setExecutionStatus] =
-    useState<ExecutionStatus>('idle');
-  const [nodeExecutionStatuses, setNodeExecutionStatuses] = useState<
-    Record<string, string>
-  >({});
-  const [executionResults, setExecutionResults] = useState<Record<string, any>>(
-    {}
-  );
+  const executionStatus = useStore((s) => s.workflowExecutionStatus);
+  const setExecutionStatus = useStore((s) => s.setWorkflowExecutionStatus);
+
   const [currentLayer, setCurrentLayer] = useState<number>(-1);
-  const [layerResults, setLayerResults] = useState<Record<number, any>>({});
+  const [layerResults, setLayerResults] = useState<
+    Record<number, Record<string, NodeExecutionResult>>
+  >({});
 
   // Workflow store state
-  const setWorkflowExecutionStatus = useStore(
-    (s) => s.setWorkflowExecutionStatus
-  );
   const updateNodeExecutionStatus = useStore(
     (s) => s.updateNodeExecutionStatus
   );
@@ -36,13 +88,11 @@ export function useWorkflowExecution(workflowId: string) {
   const cleanupHandlersRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    setWorkflowExecutionStatus(executionStatus);
-
     // Switch to pipeline mode when executing
     if (executionStatus === 'executing') {
       setWorkflowMode(EXECUTIONS_MODE);
     }
-  }, [executionStatus, setWorkflowExecutionStatus, setWorkflowMode]);
+  }, [executionStatus, setWorkflowMode]);
 
   // Connect to WebSocket for this workflow only when workflow is running
   useEffect(() => {
@@ -69,55 +119,28 @@ export function useWorkflowExecution(workflowId: string) {
   const runWorkflow = useCallback(
     async (workflowData: WorkflowClient) => {
       try {
-        console.log(`🎬 [WorkflowExecution] Starting workflow execution:`, {
-          workflowId,
-          timestamp: new Date().toISOString(),
-          nodeCount: workflowData.nodes?.length || 0,
-          edgeCount: workflowData.edges?.length || 0,
-          nodes: workflowData.nodes?.map((n) => ({
-            id: n.id,
-            type: n.data?.type,
-          })),
-          edges: workflowData.edges?.map((e) => ({
-            source: e.source,
-            target: e.target,
-          })),
-        });
-
-        // Clear execution states
-        setNodeExecutionStatuses({});
-        setExecutionResults({});
+        clearNodeExecutionStatuses();
         setCurrentLayer(-1);
         setLayerResults({});
-        clearNodeExecutionStatuses();
 
-        // Create WebSocket connection if needed
-        if (!socketRef.current) {
-          console.log(
-            `🔧 [WebSocket] Creating new WebSocket instance for workflow: ${workflowId}`
-          );
-          socketRef.current = new WorkflowWebSocket(workflowId);
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+          socketRef.current = null;
         }
 
-        // Connect to WebSocket if not already connected
-        if (!socketRef.current.isConnected()) {
-          console.log(
-            `🔗 [WebSocket] Connecting to WebSocket for workflow: ${workflowId}`
-          );
-          await socketRef.current.connect();
-          console.log(
-            `✅ [WebSocket] Connection established for workflow: ${workflowId}`
-          );
-        }
+        console.log(
+          `🔧 [WebSocket] Creating new WebSocket instance for workflow: ${workflowId}`
+        );
+        socketRef.current = new WorkflowWebSocket(workflowId);
+        await socketRef.current.connect();
 
-        // Set up message handler for all messages
         const unsubscribeMessage = socketRef.current?.on(
           'message',
           (message) => {
             console.log(`📨 [WebSocket] Raw message received:`, {
               workflowId,
               timestamp: new Date().toISOString(),
-              message: JSON.stringify(message, null, 2),
+              message: message,
             });
           }
         );
@@ -125,7 +148,7 @@ export function useWorkflowExecution(workflowId: string) {
         // Set up handlers for specific event types
         const unsubscribeStart = socketRef.current?.on(
           'workflow-execution-started',
-          (data) => {
+          (data: WorkflowExecutionStartedData) => {
             console.log(`🚀 [WorkflowExecution] Execution started:`, {
               workflowId,
               timestamp: new Date().toISOString(),
@@ -139,110 +162,130 @@ export function useWorkflowExecution(workflowId: string) {
 
         const unsubscribeComplete = socketRef.current?.on(
           'workflow-execution-completed',
-          (data) => {
+          (data: WorkflowExecutionCompletedData) => {
             console.log(
               `🎉 [WorkflowExecution] Execution completed successfully:`,
               {
                 workflowId,
                 timestamp: new Date().toISOString(),
                 status: 'completed',
-                finalResults: data?.results,
-                finalNodeStatuses: data?.node_statuses,
-                totalResults: Object.keys(data?.results || {}).length,
+                finalResults: data.results,
+                finalNodeStatuses: data.node_statuses,
+                totalResults: Object.keys(data.results).length,
               }
             );
 
-            // Update final results
-            if (data?.results) {
-              setExecutionResults(data.results);
-            }
-
             setExecutionStatus('completed');
+
+            // Clean up and disconnect WebSocket after successful completion
+            console.log(
+              `🔌 [WebSocket] Disconnecting after successful completion for workflow: ${workflowId}`
+            );
+            if (cleanupHandlersRef.current) {
+              cleanupHandlersRef.current();
+              cleanupHandlersRef.current = null;
+            }
+            if (socketRef.current) {
+              socketRef.current.disconnect();
+              socketRef.current = null;
+            }
           }
         );
 
         const unsubscribeError = socketRef.current?.on(
           'workflow-execution-error',
-          (data) => {
+          (data: WorkflowExecutionErrorData) => {
             console.error(`❌ [WorkflowExecution] Execution failed:`, {
               workflowId,
               timestamp: new Date().toISOString(),
               status: 'error',
-              error: data?.error,
+              error: data.error,
+              failedLayer: data.failed_layer,
+              partialResults: data.results,
+              finalNodeStatuses: data.node_statuses,
               errorDetails: data,
             });
             setExecutionStatus('error');
+
+            // Update node statuses if provided in error response
+            if (data.node_statuses) {
+              Object.entries(data.node_statuses).forEach(([nodeId, status]) => {
+                updateNodeExecutionStatus(nodeId, status);
+              });
+            }
+
+            // Clean up and disconnect WebSocket after error/failure
+            console.log(
+              `🔌 [WebSocket] Disconnecting after error/failure for workflow: ${workflowId}`
+            );
+            if (cleanupHandlersRef.current) {
+              cleanupHandlersRef.current();
+              cleanupHandlersRef.current = null;
+            }
+            if (socketRef.current) {
+              socketRef.current.disconnect();
+              socketRef.current = null;
+            }
           }
         );
 
         const unsubscribeProgress = socketRef.current?.on(
           'workflow-execution-progress',
-          (data) => {
+          (data: WorkflowExecutionProgressData) => {
             console.log(`📊 [WorkflowExecution] Layer execution progress:`, {
               workflowId,
               timestamp: new Date().toISOString(),
-              currentLayer: data?.current_layer,
-              nodesCompleted: data?.nodes_completed,
-              layerResults: data?.results,
-              completedCount: data?.nodes_completed?.length || 0,
+              currentLayer: data.current_layer,
+              nodesCompleted: data.nodes_completed,
+              layerResults: data.results,
+              completedCount: data.nodes_completed.length,
             });
 
-            if (typeof data?.current_layer === 'number') {
-              setCurrentLayer(data.current_layer);
-            }
-
-            if (data?.results) {
-              setLayerResults((prev) => ({
-                ...prev,
-                [data.current_layer]: data.results,
-              }));
-            }
+            setCurrentLayer(data.current_layer);
+            setLayerResults((prev) => ({
+              ...prev,
+              [data.current_layer]: data.results,
+            }));
           }
         );
 
         const unsubscribeNodeUpdate = socketRef.current?.on(
           'node-status-update',
-          (data) => {
+          (data: NodeStatusUpdateData) => {
             console.log(`🔄 [NodeStatus] Node status update received:`, {
               workflowId,
               timestamp: new Date().toISOString(),
-              nodeStatuses: data?.node_statuses,
-              statusCount: Object.keys(data?.node_statuses || {}).length,
+              nodeStatuses: data.node_statuses,
+              statusCount: Object.keys(data.node_statuses).length,
             });
 
-            if (data && data.node_statuses) {
-              // Log individual node status changes
-              Object.entries(data.node_statuses).forEach(([nodeId, status]) => {
-                console.log(`📍 [NodeStatus] Node ${nodeId}: ${status}`, {
-                  workflowId,
-                  nodeId,
-                  status,
-                  timestamp: new Date().toISOString(),
-                });
-
-                updateNodeExecutionStatus(nodeId, status as string);
-                setNodeExecutionStatuses((prev) => ({
-                  ...prev,
-                  [nodeId]: status as string,
-                }));
-              });
-
-              // Log status summary
-              const statusSummary = Object.values(data.node_statuses).reduce(
-                (acc: Record<string, number>, status) => {
-                  acc[status as string] = (acc[status as string] || 0) + 1;
-                  return acc;
-                },
-                {}
-              );
-
-              console.log(`📈 [NodeStatus] Status summary:`, {
+            // Log individual node status changes
+            Object.entries(data.node_statuses).forEach(([nodeId, status]) => {
+              console.log(`📍 [NodeStatus] Node ${nodeId}: ${status}`, {
                 workflowId,
-                statusSummary,
-                totalNodes: Object.keys(data.node_statuses).length,
+                nodeId,
+                status,
                 timestamp: new Date().toISOString(),
               });
-            }
+
+              updateNodeExecutionStatus(nodeId, status);
+            });
+
+            // Log status summary
+            const statusSummary = Object.values(data.node_statuses).reduce(
+              (acc: Record<string, number>, status) => {
+                acc[status] = (acc[status] || 0) + 1;
+                return acc;
+              },
+              {}
+            );
+
+            console.log(`📈 [NodeStatus] Status summary:`, {
+              workflowId,
+              statusSummary,
+              totalNodes: Object.keys(data.node_statuses).length,
+              timestamp: new Date().toISOString(),
+            });
           }
         );
 
@@ -278,10 +321,7 @@ export function useWorkflowExecution(workflowId: string) {
         // Store cleanup function in ref for access from other handlers
         cleanupHandlersRef.current = cleanupHandlers;
 
-        // Set status to executing AFTER handlers are set up
         setExecutionStatus('executing');
-
-        // Now execute the workflow - handlers are guaranteed to be in place
         console.log(
           `⚡ [WorkflowExecution] Sending execute command to backend:`,
           {
@@ -319,11 +359,7 @@ export function useWorkflowExecution(workflowId: string) {
   );
 
   return {
-    executionStatus,
-    nodeExecutionStatuses,
-    executionResults,
     currentLayer,
-    layerResults,
     runWorkflow,
   };
 }

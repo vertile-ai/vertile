@@ -1,24 +1,21 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useKeyPress } from 'ahooks';
+import './style.css';
 import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
 import SaveStatusIcon from '@/app/components/workflow/SaveStatusIcon';
 import RunWorkflowButton from '@/app/workflows/[id]/_components/run-workflow';
 import { FloppyDisk, Warning } from '@phosphor-icons/react';
 import WorkflowNameEditor from './WorkflowNameEditor';
-import './style.css';
-import { useKeyPress } from 'ahooks';
 import { useReactFlow, useStoreApi } from 'reactflow';
 import { prepareWorkflowData } from '../../util';
 import useSWRMutation from 'swr/mutation';
 import { COMPOSE_MODE, EXECUTIONS_MODE } from '../workflow-main/const';
 import { getKeyboardKeyCodeBySystem } from '../workflow-internal/utils';
 
-interface WorkflowHeaderProps {
-  workflowId: string;
-}
-
-const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({ workflowId }) => {
+const WorkflowHeader = () => {
+  const workflowId = useStore((s) => s.workflowId);
   const workflowMode = useStore((s) => s.workflowMode);
   const setWorkflowMode = useStore((s) => s.setWorkflowMode);
   const workflowExecutionStatus = useStore((s) => s.workflowExecutionStatus);

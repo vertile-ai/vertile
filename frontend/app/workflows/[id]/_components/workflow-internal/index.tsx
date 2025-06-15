@@ -11,19 +11,17 @@ import ReactFlow, {
   ConnectionLineType,
   useReactFlow,
   useStoreApi,
+  BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import './style.css';
 import { BlockEnum } from '@/app/workflows/[id]/_components/nodes/types';
-import CustomNode from '@/app/workflows/[id]/_components/nodes';
 import {
   useNodesInteractions,
-  useNodesReadOnly,
   usePanelInteractions,
   useWorkflow,
 } from './hooks/hooks';
-import CustomEdge from './custom-edge';
-import CustomConnectionLine from './custom-connection-line';
+import CustomConnectionLine from '@/app/workflows/[id]/_components/connection-line';
 import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
 import { generateNewNode, getKeyboardKeyCodeBySystem } from './utils';
 import { useEdgesInteractions } from './hooks/use-edges-interactions';
@@ -35,15 +33,8 @@ import {
   ITERATION_CHILDREN_Z_INDEX,
   NODES_INITIAL_DATA,
 } from '@/app/workflows/[id]/_components/workflow-main/const';
-
-// Define nodeTypes and edgeTypes outside the component to prevent recreating on every render
-const nodeTypes: Record<'custom', React.FC> = {
-  custom: CustomNode,
-};
-
-const edgeTypes: Record<'custom', React.FC> = {
-  custom: CustomEdge,
-};
+import { nodeTypes } from '@/app/workflows/[id]/_components/nodes/const';
+import { edgeTypes } from '@/app/workflows/[id]/_components/custom-edge/type';
 
 interface WorkflowProps {
   initialData?: WorkflowClient | null;
@@ -60,11 +51,8 @@ const WorkflowInternal: FC<WorkflowProps> = memo(({ initialData }) => {
   const setSaveStatus = useStore((s) => s.setSaveStatus);
   const setHasChanges = useStore((s) => s.setHasChanges);
 
-  const { nodesReadOnly } = useNodesReadOnly();
   const store = useStoreApi();
   const reactflow = useReactFlow();
-
-  const isReadOnly = nodesReadOnly || workflowMode === EXECUTIONS_MODE;
 
   const {
     handleNodeDragStart,
@@ -301,10 +289,10 @@ const WorkflowInternal: FC<WorkflowProps> = memo(({ initialData }) => {
       connectionLineComponent: CustomConnectionLine,
       connectionLineContainerStyle: { zIndex: ITERATION_CHILDREN_Z_INDEX },
       multiSelectionKeyCode: null,
-      nodesDraggable: !isReadOnly,
-      nodesConnectable: !isReadOnly,
-      nodesFocusable: !isReadOnly,
-      edgesFocusable: !isReadOnly,
+      nodesDraggable: true,
+      nodesConnectable: true,
+      nodesFocusable: true,
+      edgesFocusable: true,
       panOnDrag: controlMode === 'hand' || workflowMode === EXECUTIONS_MODE,
       zoomOnPinch: true,
       zoomOnScroll: true,
@@ -336,10 +324,8 @@ const WorkflowInternal: FC<WorkflowProps> = memo(({ initialData }) => {
       handleSelectionChange,
       handleSelectionDrag,
       handlePaneContextMenu,
-      isReadOnly,
       controlMode,
       isValidConnection,
-      workflowMode,
     ]
   );
 
@@ -391,11 +377,16 @@ const WorkflowInternal: FC<WorkflowProps> = memo(({ initialData }) => {
       }}
     >
       <ReactFlow {...reactFlowProps}>
-        <Background gap={[14, 14]} size={2} color="#9CA3AF" />
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={[14, 14]}
+          size={2}
+          color="#d3dbe8"
+        />
       </ReactFlow>
     </div>
   );
 });
 WorkflowInternal.displayName = 'WorkflowInternal';
 
-export default memo(WorkflowInternal);
+export default WorkflowInternal;

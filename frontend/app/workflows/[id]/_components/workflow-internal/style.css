@@ -17,7 +17,6 @@
   background: rgba(99, 102, 241, 0.05);
 }
 
-/* Ensure selected edges are blue */
 .react-flow__edge.selected .react-flow__edge-path {
   stroke: #6366f1 !important;
   stroke-width: 2px !important;
@@ -32,7 +31,6 @@
   }
 }
 
-/* Light mode styles for ReactFlow */
 .react-flow__node {
   background-color: white;
   border: 1px solid #e5e7eb;

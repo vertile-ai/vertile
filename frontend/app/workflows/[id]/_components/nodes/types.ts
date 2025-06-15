@@ -4,6 +4,7 @@ import type { Node as ReactFlowNode } from 'reactflow';
 import { TrainNodeType } from './Train/types';
 import { NodeRunningStatus } from '../../types';
 import { LLMNodeType } from './llm/types';
+import CustomNode from './index';
 
 export enum BlockEnum {
   Train = 'train',

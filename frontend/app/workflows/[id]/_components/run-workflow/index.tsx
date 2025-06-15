@@ -6,6 +6,8 @@ import { useStore } from '@/app/workflows/[id]/_components/workflow-main/store';
 import { useWorkflowExecution } from '@/app/workflows/[id]/_components/workflow-main/hooks/use-workflow-execution';
 import { PlayIcon } from '@heroicons/react/24/solid';
 import { EXECUTIONS_MODE } from '../workflow-main/const';
+import { prepareWorkflowData } from '../../util';
+import useSWRMutation from 'swr/mutation';
 
 interface RunWorkflowButtonProps {
   workflowId: string;
@@ -17,8 +19,14 @@ const RunWorkflowButton: React.FC<RunWorkflowButtonProps> = ({
   const reactflow = useReactFlow();
   const store = useStoreApi();
   const saveStatus = useStore((s) => s.saveStatus);
+  const setSaveStatus = useStore((s) => s.setSaveStatus);
   const setWorkflowMode = useStore((s) => s.setWorkflowMode);
   const executionStatus = useStore((s) => s.workflowExecutionStatus);
+  const hasChanges = useStore((s) => s.hasChanges);
+  const setHasChanges = useStore((s) => s.setHasChanges);
+  const workflowName = useStore((s) => s.workflowName);
+  const lastSaved = useStore((s) => s.lastSaved);
+  const setLastSaved = useStore((s) => s.setLastSaved);
   const workflow = useStore((s) =>
     s.workflows?.find((w) => w.id === workflowId)
   );
@@ -26,11 +34,87 @@ const RunWorkflowButton: React.FC<RunWorkflowButtonProps> = ({
   const { runWorkflow } = useWorkflowExecution(workflowId);
   const [isHovered, setIsHovered] = useState(false);
 
+  // SWR mutation hooks for saving workflow
+  const { trigger: triggerWorkflowSave } = useSWRMutation(
+    `/api/workflows/${workflowId}`,
+    async (url, { arg }) => {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(arg),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save workflow');
+      }
+
+      return response.json();
+    }
+  );
+
+  const { trigger: triggerWorkflowUpdate } = useSWRMutation(
+    `/api/workflows/${workflowId}`,
+    async (url, { arg }) => {
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(arg),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save workflow');
+      }
+
+      return response.json();
+    }
+  );
+
+  const saveWorkflow = async () => {
+    if (!hasChanges) return;
+
+    setSaveStatus('saving');
+
+    const { getNodes } = store.getState();
+    const currentNodes = getNodes();
+    const { edges: currentEdges } = store.getState();
+    const { getViewport } = reactflow;
+    const currentViewport = getViewport();
+
+    const workflowData = prepareWorkflowData({
+      name: workflowName,
+      viewport: currentViewport,
+      nodes: currentNodes,
+      edges: currentEdges,
+    });
+
+    try {
+      if (lastSaved > 0) {
+        await triggerWorkflowUpdate(workflowData as any);
+      } else {
+        await triggerWorkflowSave(workflowData as any);
+      }
+
+      setSaveStatus('saved');
+      setLastSaved(Date.now());
+      setHasChanges(false);
+    } catch (error) {
+      setSaveStatus('error');
+      throw error;
+    }
+  };
+
   const handleRunWorkflow = async () => {
     if (executionStatus === 'executing') return;
     if (saveStatus === 'saving') return;
 
     try {
+      // Save the current workflow status first
+      await saveWorkflow();
+
       // Change to pipeline mode when running workflow
       setWorkflowMode(EXECUTIONS_MODE);
 

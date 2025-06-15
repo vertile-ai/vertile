@@ -11,7 +11,9 @@ const WorkflowPage = () => {
       <ReactFlowProvider>
         <div className="flex h-screen w-full">
           <WorkflowSidebar />
-          <WorkflowMain />
+          <div className="h-screen w-full overflow-hidden relative flex flex-col">
+            <WorkflowMain />
+          </div>
         </div>
       </ReactFlowProvider>
     </WorkflowContextProvider>

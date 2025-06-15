@@ -1,6 +1,9 @@
-import { BlockEnum } from './types';
+import { BlockEnum, IOType } from './types';
+import CustomNode from './index';
 
-import { IOType } from './types';
+export const nodeTypes: Record<'custom', React.FC> = {
+  custom: CustomNode,
+};
 
 export const NodeInputTypes: Record<BlockEnum, IOType[]> = {
   [BlockEnum.Dataset]: [],

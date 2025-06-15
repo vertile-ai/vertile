@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import Sidebar from './components/Sidebar';
+import Sidebar from './components/sidebar';
 import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TooltipPlus } from './ui/TooltipPlus';
+import { TooltipPlus } from '@/app/components/ui/TooltipPlus';
 
 interface SidebarNavItemProps {
   icon: React.ReactNode;

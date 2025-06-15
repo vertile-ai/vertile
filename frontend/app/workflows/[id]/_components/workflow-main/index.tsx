@@ -25,13 +25,11 @@ const WorkflowMain = () => {
   }
 
   const workflows = useStore((state) => state.workflows);
-  const panelRef = useRef<HTMLDivElement>(null);
 
   const isExecutionMode = useStore(
     (state) => state.workflowMode === EXECUTIONS_MODE
   );
 
-  const selectedNode = useStore((s) => s.selectedNode);
   const setSelectedNode = useStore((s) => s.setSelectedNode);
 
   const setWorkflowName = useStore((state) => state.setWorkflowName);
@@ -43,8 +41,18 @@ const WorkflowMain = () => {
     data: workflowData,
     error,
     isLoading,
-  } = useSWR(workflowId ? `/api/workflows/${workflowId}` : null, () =>
-    getWorkflow(workflowId)
+  } = useSWR(
+    workflowId ? `/api/workflows/${workflowId}` : null,
+    () => getWorkflow(workflowId),
+    {
+      shouldRetryOnError: (err) => {
+        if (err.status === 404) {
+          return false;
+        }
+        return true;
+      },
+      errorRetryCount: 2,
+    }
   );
 
   // Watch for save status and refresh data when saved

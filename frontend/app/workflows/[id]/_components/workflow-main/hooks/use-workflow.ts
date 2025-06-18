@@ -57,43 +57,10 @@ export function useWorkflow() {
     }
   };
 
-  // Update an existing workflow
-  const updateWorkflow = useCallback(
-    async (id: string, data: any): Promise<WorkflowClient | null> => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/workflows/${id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (!response.ok || response.status >= 400) {
-          const errorData = await response.json();
-          console.warn('Failed to patch workflow', errorData);
-          return null;
-        }
-
-        return await response.json();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
   return {
     loading,
     error,
     fetchWorkflow,
     createWorkflow,
-    updateWorkflow,
   };
 }

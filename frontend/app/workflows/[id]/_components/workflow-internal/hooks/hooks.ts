@@ -142,16 +142,17 @@ export const useWorkflow = () => {
   const handleLayout = useCallback(() => {
     workflowStore.setState({ nodeAnimation: true });
     const { getNodes, edges, setNodes } = store.getState();
-    const { setViewport } = reactflow;
+    const { setViewport, getViewport } = reactflow;
     const nodes = getNodes();
+    const currentViewport = getViewport();
 
     const newNodes = sortNodes(nodes, edges);
     setNodes(newNodes);
 
     workflowStore.setState({ hasChanges: true });
     setViewport({
-      x: 0,
-      y: 0,
+      x: currentViewport.x,
+      y: currentViewport.y,
       zoom: 1,
     });
   }, [store, reactflow, workflowStore]);

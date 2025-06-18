@@ -12,6 +12,7 @@ import ReactFlow, {
   useReactFlow,
   useStoreApi,
   BackgroundVariant,
+  applyNodeChanges,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import './style.css';
@@ -127,7 +128,7 @@ const WorkflowInternal: FC<WorkflowProps> = memo(({ initialData }) => {
     [handleEdgeLeave]
   );
 
-  const { getNodes } = store.getState();
+  const { getNodes, edges } = store.getState();
   const nodes = getNodes();
 
   // Track node drag for changes
@@ -200,8 +201,17 @@ const WorkflowInternal: FC<WorkflowProps> = memo(({ initialData }) => {
     [reactflow, store, workflowMode, markHasChanges]
   );
 
-  const initialNodes = initialData?.nodes?.map((node) => node.rawData) || [];
-  const initialEdges = initialData?.edges?.map((edge) => edge.rawData) || [];
+  useEffect(() => {
+    if (initialData && initialData.nodes && initialData.edges) {
+      const { setNodes, setEdges } = store.getState();
+      const initialNodes = initialData.nodes.map((node) => node.rawData);
+      const initialEdges = initialData.edges.map((edge) => edge.rawData);
+
+      // Initialize the store with API data
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+    }
+  }, [initialData, store]);
 
   useEffect(() => {
     setAutoFreeze(false);
@@ -266,8 +276,8 @@ const WorkflowInternal: FC<WorkflowProps> = memo(({ initialData }) => {
     () => ({
       nodeTypes,
       edgeTypes,
-      nodes: initialNodes,
-      edges: initialEdges,
+      nodes,
+      edges,
       onNodeDragStart: handleNodeDragStart,
       onNodeDrag: memoizedHandleNodeDrag,
       onNodeMouseEnter: memoizedHandleNodeEnter,
